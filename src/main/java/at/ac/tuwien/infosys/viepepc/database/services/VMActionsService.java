@@ -20,6 +20,8 @@ public class VMActionsService {
 
     @Value("${spring.datasource.url}")
     private String databaseUrl = "jdbc:mysql://localhost:3306/";
+    @Value("${spring.datasource.url.parameter}")
+    private String databaseUrlParameter = "?autoReconnect=true&useSSL=false";
     @Value("${spring.datasource.username}")
     private String databaseUsername = "viepep";
     @Value("${spring.datasource.password}")
@@ -36,7 +38,7 @@ public class VMActionsService {
      */
     public List<VMActionsDTO> getVMActionsDTOs(String dbName, Date firstDate, int maxDurationInMinutes, boolean isBaseline) throws SQLException, ParseException {
 
-        Connection conn = DriverManager.getConnection(databaseUrl.concat(dbName), databaseUsername, databasePassword);
+        Connection conn = DriverManager.getConnection(databaseUrl.concat(dbName).concat(databaseUrlParameter), databaseUsername, databasePassword);
 
         Statement stmt = conn.createStatement();
         String sql;
@@ -193,7 +195,7 @@ public class VMActionsService {
         Double externalCosts = 0.0;
 
 
-        Connection conn = DriverManager.getConnection(databaseUrl.concat(dbName), databaseUsername, databasePassword);
+        Connection conn = DriverManager.getConnection(databaseUrl.concat(dbName).concat(databaseUrlParameter), databaseUsername, databasePassword);
 
         Statement stmt = conn.createStatement();
         String sql;

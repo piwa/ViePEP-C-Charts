@@ -16,6 +16,8 @@ public class DataTransferElementService {
 
     @Value("${spring.datasource.url}")
     private String databaseUrl = "jdbc:mysql://localhost:3306/";
+    @Value("${spring.datasource.url.parameter}")
+    private String databaseUrlParameter = "?autoReconnect=true&useSSL=false";
     @Value("${spring.datasource.username}")
     private String databaseUsername = "viepep";
     @Value("${spring.datasource.password}")
@@ -23,7 +25,7 @@ public class DataTransferElementService {
 
 
     public Integer getDataTransferCosts(String dbName) throws SQLException {
-        Connection conn = DriverManager.getConnection(databaseUrl.concat(dbName), databaseUsername, databasePassword);
+        Connection conn = DriverManager.getConnection(databaseUrl.concat(dbName).concat(databaseUrlParameter), databaseUsername, databasePassword);
 
         Integer dataTransferCosts = 0;
 
