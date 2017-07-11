@@ -35,7 +35,7 @@ public class WorkflowService {
         ResultSet rs = stmt.executeQuery(sql);
 
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         //STEP 5: Extract data from result set
 
         List<WorkflowDTO> results = new ArrayList<>();
@@ -75,7 +75,7 @@ public class WorkflowService {
         ResultSet rs = stmt.executeQuery(sql);
 
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         //STEP 5: Extract data from result set
 
         List<WorkflowDTO> results = new ArrayList<>();

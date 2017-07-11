@@ -152,7 +152,7 @@ public class JFreeChartCreator {//extends ApplicationFrame {
             rangeAxis1.setAutoRangeIncludesZero(true);
             NumberTickUnit unit1 = new NumberTickUnit(5);
             rangeAxis1.setTickUnit(unit1);
-            rangeAxis1.setRange(0, 45);
+            rangeAxis1.setRange(0, 55);
 
             final XYStepRenderer renderer = new XYStepRenderer();
             renderer.setSeriesLinesVisible(0, true);
@@ -289,8 +289,8 @@ public class JFreeChartCreator {//extends ApplicationFrame {
             double sum = 0;
             Date date = null;
             for (VMActionsDTO dto : values.get(minute)) {
-                output += " " + dto.getAmount();
-                sum += dto.getAmount();
+                output += " " + dto.getCoreAmount();
+                sum += dto.getCoreAmount();
                 date = dto.getDate();
             }
 //            System.out.println(output + " avg: " + sum / 3.0);
@@ -303,17 +303,17 @@ public class JFreeChartCreator {//extends ApplicationFrame {
 
         for (VMActionsDTO vmActionsDTO : evaluation1) {
             RegularTimePeriod period = new Minute(vmActionsDTO.getDate());
-            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, vmActionsDTO.getAmount());
+            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, vmActionsDTO.getCoreAmount());
             series1.add(timeSeriesDataItem);
         }
         for (VMActionsDTO vmActionsDTO : evaluation2) {
             RegularTimePeriod period = new Minute(vmActionsDTO.getDate());
-            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, vmActionsDTO.getAmount());
+            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, vmActionsDTO.getCoreAmount());
             series2.add(timeSeriesDataItem);
         }
         for (VMActionsDTO vmActionsDTO : evaluation3) {
             RegularTimePeriod period = new Minute(vmActionsDTO.getDate());
-            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, vmActionsDTO.getAmount());
+            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, vmActionsDTO.getCoreAmount());
             series3.add(timeSeriesDataItem);
         }
 

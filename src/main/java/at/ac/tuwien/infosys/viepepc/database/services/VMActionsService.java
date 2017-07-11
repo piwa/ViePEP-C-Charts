@@ -2,6 +2,9 @@ package at.ac.tuwien.infosys.viepepc.database.services;
 
 import at.ac.tuwien.infosys.viepepc.database.entities.VMActionsDTO;
 import at.ac.tuwien.infosys.viepepc.database.entities.WorkflowDTO;
+import at.ac.tuwien.infosys.viepepc.database.entities.virtualmachine.VMType;
+import at.ac.tuwien.infosys.viepepc.database.inmemory.services.CacheVirtualMachineService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +20,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class VMActionsService {
+
+    @Autowired
+    private CacheVirtualMachineService cacheVirtualMachineService;
 
     @Value("${spring.datasource.url}")
     private String databaseUrl = "jdbc:mysql://localhost:3306/";
@@ -44,7 +50,7 @@ public class VMActionsService {
         String sql;
 
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         ResultSet rs;
         //step 1 : load them all
         sql = "select * from virtual_machine_reporting_action order by timestamp asc;";
@@ -57,13 +63,16 @@ public class VMActionsService {
             VMActionsDTO dto = new VMActionsDTO();
             Date timestamp = simpleDateFormat.parse(rs.getString("timestamp"));
             String vmID = rs.getString("virtual_machineid");
+            String vmAction = rs.getString("vm_action");
+            String vmTypeId = rs.getString("virtual_machine_typeid");
             if (isBaseline) {
                 //    vmID = vmID.replace("0_", "3_");
             }
-            String vmAction = rs.getString("vm_action");
 
             dto.setVMID(vmID);
             dto.setVMAction(vmAction);
+            dto.setDate(timestamp);
+            dto.setVMTypeID(vmTypeId);
             dto.setDate(new Date(timestamp.getTime() - firstDate.getTime()));
             tmpVMActionsList.add(dto);
         }
@@ -98,7 +107,7 @@ public class VMActionsService {
         VMActionsDTO lastAction = new VMActionsDTO();
         lastAction.setDate(start.getTime());
         lastAction.setVMAction("");
-        lastAction.setAmount(0);
+        lastAction.setCoreAmount(0);
         lastAction.setVMID("");
 //        System.out.println("LastMinute: " + maxDurationInMinutes);
 
@@ -132,7 +141,7 @@ public class VMActionsService {
                 current.set(Calendar.MINUTE, minutes + 1);
                 lastAction.setDate(current.getTime());
                 if (i >= maxDurationInMinutes) {
-                    lastAction.setAmount(0);
+                    lastAction.setCoreAmount(0);
                 }
 
                 vmActionsDTOs.add(lastAction);
@@ -145,13 +154,13 @@ public class VMActionsService {
                 for (VMActionsDTO vmActionsDTO : vmActionsDTOs) {
                     String vmid = newAction.getVMID() + vmActionsDTO.getVMID() + "_" + vmActionsDTO.getVMAction() + ",";
                     newAction.setVMID(vmid);
-                    sum += vmActionsDTO.getCount();
+                    sum += getCoreCount(vmActionsDTO);
                 }
-                sum = sum + lastAction.getAmount();
+                sum = sum + lastAction.getCoreAmount();
                 if (i >= maxDurationInMinutes) {//set last value to 0
-                    newAction.setAmount(0);
+                    newAction.setCoreAmount(0);
                 } else {
-                    newAction.setAmount(sum);
+                    newAction.setCoreAmount(sum);
                 }
                 vmActionsDTOs = new ArrayList<>();
                 vmActionsDTOs.add(newAction);
@@ -177,8 +186,9 @@ public class VMActionsService {
         VMActionsDTO copy = new VMActionsDTO();
         copy.setDate(lastAction.getDate());
         copy.setVMID(lastAction.getVMID());
-        copy.setAmount(lastAction.getAmount());
+        copy.setCoreAmount(lastAction.getCoreAmount());
         copy.setVMAction(lastAction.getVMAction());
+        copy.setVMTypeID(lastAction.getVMTypeID());
         return copy;
     }
 
@@ -215,12 +225,14 @@ public class VMActionsService {
             Date timestamp = simpleDateFormat.parse(rs.getString("timestamp"));
             String vmID = rs.getString("virtual_machineid");
             String vmAction = rs.getString("vm_action");
+            String vmTypeId = rs.getString("virtual_machine_typeid");
             if (isBaseline) {
                 //    vmID = vmID.replace("0_", "3_");
             }
             dto.setVMID(vmID);
             dto.setVMAction(vmAction);
             dto.setDate(timestamp);
+            dto.setVMTypeID(vmTypeId);
             //dto.setDate(new Date(timestamp.getTime() - firstArrivedWorkflow.getArrivedAt().getTime()));
             results.add(dto);
         }
@@ -236,11 +248,11 @@ public class VMActionsService {
 //        stopResults.addAll(results);
 
         for (VMActionsDTO action : results) {
-            String type = action.getVMID().substring(0, 1);
+
             if (action.getVMAction().equalsIgnoreCase("START")) {
                 long milliseconds = 0;
                 for (VMActionsDTO action2 : stopResults) {
-                    if (action2.getVMID().substring(0, 1).equals(type)) {
+                    if (action2.getVMID().equals(action.getVMID())) {
                         milliseconds = action2.getDate().getTime() - action.getDate().getTime();
                         stopResults.remove(action2);
                         break;
@@ -252,13 +264,19 @@ public class VMActionsService {
                 double inMinutes = milliseconds / 1000 / 60;
                 double timeslots = Math.ceil(inMinutes / 5);
 
-                if (type.startsWith("0")) internalCosts += (10 * timeslots);
-                else if (type.startsWith("1")) internalCosts += (18 * timeslots);
-                else if (type.startsWith("2")) internalCosts += (27 * timeslots);
-                else if (type.startsWith("3")) internalCosts += (35 * timeslots);
-                else if (type.startsWith("4")) externalCosts += (15 * timeslots);
-                else if (type.startsWith("5")) externalCosts += (30 * timeslots);
-                else if (type.startsWith("6")) externalCosts += (50 * timeslots);
+                try {
+                    VMType vmType = cacheVirtualMachineService.getVmTypeFromIdentifier(action.getVMTypeID());
+
+
+                    if(vmType.getLocation().equals("internal")) {
+                        internalCosts = internalCosts + (vmType.getCosts() * timeslots);
+                    } else {
+                        externalCosts = externalCosts + (vmType.getCosts() * timeslots);
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
             }
         }
@@ -269,4 +287,20 @@ public class VMActionsService {
 
         return new double[]{internalCosts, externalCosts};
     }
+
+    public int getCoreCount(VMActionsDTO vmAction) {
+
+        int result = 1;
+
+        try {
+            VMType vmType = cacheVirtualMachineService.getVmTypeFromIdentifier(vmAction.getVMTypeID());
+            result = vmType.getCores();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        result = (!vmAction.getVMAction().equalsIgnoreCase("START")) ? result * -1 : result;
+        return result;
+    }
+
 }

@@ -56,32 +56,24 @@ public class DataLoader {
             JFreeChartCreator jFreeChartCreator = new JFreeChartCreator();
             List<File> files = new ArrayList<>();
             // int mo=0;
-            for (int mo = 0; mo < 2; mo++) {
+            for (int mo = 0; mo < 1; mo++) {
 
-                int predefinedMax = 60;
-                String chartName = "Constant Arrival - Strict";
-                String optimizedRun = "viepep4";
-                String baselineRun = "viepep4";
-                //String baselineRun = "run%sconstant15baseline";
-                // String filename = "/tmp/figure181827937803145453.pdf";
-                String filename = "figure181827937803145453.pdf";
-/*
+                int predefinedMax = 0;
+                String chartName = "";
+                String optimizedRun = "";
+                String baselineRun = "";
+                String filename = "";
+
                 switch (mo) {
 
                     case 0:
                         predefinedMax = 40;
                         chartName = "Constant Arrival - Strict";
-                       // optimizedRun = "run%sburst15";
-                      optimizedRun="viepep3_const1_25_120sec_100proc_18vms_genetic_1";
-                    // optimizedRun="viepep3_const1_25_120sec_18vms_genetic_2";//very nice to show!!!
-                      baselineRun="viepep3_const1_25_120sec_18vms";//
-                        //  baselineRun="viepep3_const1_25_120sec_9vms";
-
-                      //  baselineRun="viepep3_constant_factor1_25_120sec";
-                       // baselineRun = "run%sconstant15baseline";
-                        filename = "constant15.pdf";
+                        optimizedRun = "StartParNotExceedContainer";
+                        baselineRun = "StartParNotExceed";
+                        filename = "constantStartParNotExceed.pdf";
                         break;
-                    case 1:
+/*                    case 1:
                         predefinedMax = 40;
                         chartName = "Constant Arrival - Lenient";
                         optimizedRun = "viepep3_const1_25_120sec_18vms_genetic_100proc";//meaning simulation-false
@@ -105,16 +97,16 @@ public class DataLoader {
                        // baselineRun = "run%spyramid25baseline";
                         filename = "pyramid25.pdf";
                         break;
-
-                }
 */
+                }
+
 
 
 
                 int maxOptimizedDuration = 0;
                 int maxBaselineDuration = 0;
 
-                durationOptimized(optimizedRun, maxOptimizedDuration);
+                durationOptimized( optimizedRun, maxOptimizedDuration);
 
                 durationBaseline(baselineRun, maxBaselineDuration);
 
@@ -275,9 +267,9 @@ public class DataLoader {
         calculateStandardDeviation("penalty percent", penaltyPoints1[0], penaltyPoints2[0], penaltyPoints3[0]);
         calculateStandardDeviation("penalty points", penaltyPoints1[1], penaltyPoints2[1], penaltyPoints3[1]);
 
-        double total1 = coreUsage1[0] + penaltyPoints1[1];
-        double total2 = coreUsage2[0] + penaltyPoints2[1];
-        double total3 = coreUsage3[0] + penaltyPoints3[1];
+        double total1 = coreUsage1[0] + coreUsage1[1] + penaltyPoints1[1];
+        double total2 = coreUsage2[0] + coreUsage2[1] + penaltyPoints2[1];
+        double total3 = coreUsage3[0] + coreUsage3[1] + penaltyPoints3[1];
 
 
         System.out.println("total costs1: " + total1);
