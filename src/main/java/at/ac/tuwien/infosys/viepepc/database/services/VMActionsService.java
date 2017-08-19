@@ -4,6 +4,7 @@ import at.ac.tuwien.infosys.viepepc.database.entities.VMActionsDTO;
 import at.ac.tuwien.infosys.viepepc.database.entities.WorkflowDTO;
 import at.ac.tuwien.infosys.viepepc.database.entities.virtualmachine.VMType;
 import at.ac.tuwien.infosys.viepepc.database.inmemory.services.CacheVirtualMachineService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit;
  * Created by philippwaibel on 24/04/2017.
  */
 @Component
+@Slf4j
 public class VMActionsService {
 
     @Autowired
@@ -281,7 +283,7 @@ public class VMActionsService {
             }
         }
 
-        System.out.println(dbName + " core costs: " + (internalCosts + externalCosts) + " - internalCosts: " + internalCosts + " - externalCosts: " + externalCosts);
+        log.info(dbName + " core costs: " + (internalCosts + externalCosts) + " (internalCosts: " + internalCosts + ", externalCosts: " + externalCosts + ")");
         rs.close();
         stmt.close();
 
@@ -299,8 +301,13 @@ public class VMActionsService {
             e.printStackTrace();
         }
 
-        result = (!vmAction.getVMAction().equalsIgnoreCase("START")) ? result * -1 : result;
-        return result;
+        if(vmAction.getVMAction().equalsIgnoreCase("START")) {
+            return result;
+        }
+        else {
+            return result * -1;
+        }
+
     }
 
 }

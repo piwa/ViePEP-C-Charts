@@ -5,6 +5,7 @@ import at.ac.tuwien.infosys.viepepc.database.entities.WorkflowDTO;
 import at.ac.tuwien.infosys.viepepc.database.services.DataTransferElementService;
 import at.ac.tuwien.infosys.viepepc.database.services.VMActionsService;
 import at.ac.tuwien.infosys.viepepc.database.services.WorkflowService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.time.TimeSeries;
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeUnit;
  * Created by Philipp Hoenisch on 9/1/14.
  */
 @Component
+@Slf4j
 public class DataLoader {
 
     @Autowired
@@ -44,21 +46,22 @@ public class DataLoader {
     private TimeSeriesCollection workflowArrivalDataSet = null;
     private TimeSeriesCollection optimizedVMDataSet = null;
 
+
+
     public void createGraph() {
         Statement stmt = null;
         try {
-            //STEP 2: Register JDBC driver
             Class.forName(databaseDriver);
+            log.info("Connecting to database...");
 
-            //STEP 3: Open a connection
-            System.out.println("Connecting to database...");
-
-            JFreeChartCreator jFreeChartCreator = new JFreeChartCreator();
+//            JFreeChartCreator jFreeChartCreator = new JFreeChartCreator();
             List<File> files = new ArrayList<>();
             // int mo=0;
-            for (int mo = 0; mo < 1; mo++) {
+            for (int mo = 0; mo <= 3; mo++) {
 
                 int predefinedMax = 0;
+                int coreAxisSteps = 0;
+                int maxCoreAxisValue = 0;
                 String chartName = "";
                 String optimizedRun = "";
                 String baselineRun = "";
@@ -67,37 +70,56 @@ public class DataLoader {
                 switch (mo) {
 
                     case 0:
-                        predefinedMax = 40;
-                        chartName = "Constant Arrival - Strict";
-                        optimizedRun = "StartParNotExceedContainer";
-                        baselineRun = "StartParNotExceed";
-                        filename = "constantStartParNotExceed.pdf";
+                        predefinedMax = 120;
+                        maxCoreAxisValue = 80;
+                        coreAxisSteps = 10;
+                        chartName = "Pyramid Arrival StartParExceedContainer - Strict";
+                        optimizedRun = "Pyramid_StartParExceedContainer_1008_1";
+                        baselineRun = "Pyramid_StartParExceed_1008_1";
+                        filename = "Pyramid_StartParExceed.pdf";
                         break;
-/*                    case 1:
-                        predefinedMax = 40;
-                        chartName = "Constant Arrival - Lenient";
-                        optimizedRun = "viepep3_const1_25_120sec_18vms_genetic_100proc";//meaning simulation-false
-                        baselineRun="viepep3_const1_25_120sec_18vms_100proc";
-                       // baselineRun = "run%sconstant25baseline";
-                        filename = "constant25.pdf";
+
+                    case 1:
+                        predefinedMax = 120;
+                        maxCoreAxisValue = 80;
+                        coreAxisSteps = 10;
+                        chartName = "Pyramid Arrival StartParExceedContainer - Strict";
+                        optimizedRun = "Pyramid_StartParExceedContainer_1008_1";
+                        baselineRun = "Pyramid_StartParExceed_1008_1";
+                        filename = "Pyramid_StartParExceed_1008_1.pdf";
                         break;
+
                     case 2:
-                        predefinedMax = 65;
-                        chartName = "Pyramid Arrival - Strict";
-                        optimizedRun = "viepep3";
-                        baselineRun="viepep3";
-                      //  baselineRun = "run%spyramid15baseline";
-                        filename = "pyramid15.pdf";
+                        predefinedMax = 120;
+                        maxCoreAxisValue = 150;
+                        coreAxisSteps = 20;
+                        chartName = "Pyramid Arrival StartParNotExceedContainer - Strict";
+                        optimizedRun = "Pyramid_StartParNotExceedContainer_2707_1";
+                        baselineRun = "Pyramid_StartParNotExceedContainer_2707_1";
+                        filename = "Pyramid_StartParNotExceed.pdf";
                         break;
+
                     case 3:
-                        predefinedMax = 65;
-                        chartName = "Pyramid Arrival - Lenient";
-                        optimizedRun = "viepep3";
-                        baselineRun="viepep3";
-                       // baselineRun = "run%spyramid25baseline";
-                        filename = "pyramid25.pdf";
+                        predefinedMax = 120;
+                        maxCoreAxisValue = 150;
+                        coreAxisSteps = 20;
+                        chartName = "Pyramid Arrival AllParExceedContainer - Strict";
+                        optimizedRun = "Pyramid_AllParExceedContainer_2707_1";
+                        baselineRun = "Pyramid_AllParExceedContainer_2707_1";
+                        filename = "Pyramid_AllParExceed.pdf";
                         break;
-*/
+
+                    case 4:
+                        predefinedMax = 120;
+                        maxCoreAxisValue = 150;
+                        coreAxisSteps = 20;
+                        chartName = "Pyramid Arrival AllParNotExceedContainer - Strict";
+                        optimizedRun = "Pyramid_AllParNotExceedContainer_2707_1";
+                        baselineRun = "Pyramid_AllParNotExceedContainer_2707_1";
+                        filename = "Pyramid_AllParNotExceed.pdf";
+                        break;
+
+
                 }
 
 
@@ -107,12 +129,12 @@ public class DataLoader {
                 int maxBaselineDuration = 0;
 
                 durationOptimized( optimizedRun, maxOptimizedDuration);
-
+                log.info("");
                 durationBaseline(baselineRun, maxBaselineDuration);
 
                 int absolutMax = predefinedMax; //Math.max(maxBaselineDuration, maxOptimizedDuration);
 
-                JFreeChart chart = jFreeChartCreator.createChart(chartName, workflowArrivalDataSet, optimizedVMDataSet, new Date(absolutMax * 61 * 1000));
+                JFreeChart chart = jFreeChartCreator.createChart(chartName, workflowArrivalDataSet, optimizedVMDataSet, new Date(absolutMax * 61 * 1000),  maxCoreAxisValue, coreAxisSteps);
                 OutputStream out = null;
                 try {
                     File file = new File(filename);
@@ -121,15 +143,13 @@ public class DataLoader {
                     }
                     out = new FileOutputStream(file);
                     jFreeChartCreator.writeAsPDF(chart, out, 500, 270);
-                    System.out.println("IMG at: " + file.getAbsolutePath());
+                    log.info("IMG at: " + file.getAbsolutePath());
                     files.add(file);
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
+                log.info("");
 
-                for (File file : files) {
-                    System.out.println("cp "+ file.getAbsolutePath() + " .");
-                }
             }//here from cycle??
         } catch (SQLException se) {
             //Handle errors for JDBC
@@ -146,11 +166,77 @@ public class DataLoader {
             }// nothing we can do
         }//end try
 
-        System.out.println("Goodbye!");
+        log.info("Goodbye!");
     }//end main
 
 
+
+    private int durationOptimized(String optimizedRun, int maxOptimizedDuration) throws SQLException, ParseException {
+
+        log.info("----------------- Optimization: " + optimizedRun + " -----------------");
+
+        List<WorkflowDTO> workflowArrivals = workflowService.getWorkflowDTOsArrivals(String.format(optimizedRun, "1"));
+
+        List<WorkflowDTO> workflowsRun1 = workflowService.getWorkflowDTOs(String.format(optimizedRun, "1"));
+        List<WorkflowDTO> workflowsRun2 = workflowService.getWorkflowDTOs(String.format(optimizedRun, "2"));
+        List<WorkflowDTO> workflowsRun3 = workflowService.getWorkflowDTOs(String.format(optimizedRun, "3"));
+        WorkflowDTO lastExecutedWorkflowRun1 = workflowService.getLastExecutedWorkflow(workflowsRun1);
+        WorkflowDTO lastExecutedWorkflowRun2 = workflowService.getLastExecutedWorkflow(workflowsRun2);
+        WorkflowDTO lastExecutedWorkflowRun3 = workflowService.getLastExecutedWorkflow(workflowsRun3);
+
+        int eval1Duration = (int) getDurationInMinutes(workflowsRun1.get(0), lastExecutedWorkflowRun1);
+        int eval2Duration = (int) getDurationInMinutes(workflowsRun2.get(0), lastExecutedWorkflowRun2);
+        int eval3Duration = (int) getDurationInMinutes(workflowsRun3.get(0), lastExecutedWorkflowRun3);
+        maxOptimizedDuration = Math.max(Math.max(eval1Duration, eval2Duration), eval3Duration);
+
+        calculateStandardDeviation("Execution duration with optimization", eval1Duration, eval2Duration, eval3Duration);
+
+
+        List<VMActionsDTO> vmActionsRun1 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, "1"), workflowsRun1.get(0).getArrivedAt(), eval1Duration, false);
+        List<VMActionsDTO> vmActionsRun2 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, "2"), workflowsRun2.get(0).getArrivedAt(), eval2Duration, false);
+        List<VMActionsDTO> vmActionsRun3 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, "3"), workflowsRun3.get(0).getArrivedAt(), eval3Duration, false);
+        Collections.sort(vmActionsRun1, Comparator.comparing(VMActionsDTO::getDate));
+        Collections.sort(vmActionsRun2, Comparator.comparing(VMActionsDTO::getDate));
+        Collections.sort(vmActionsRun3, Comparator.comparing(VMActionsDTO::getDate));
+
+        int minute1 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
+        int minute2 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
+        int minute3 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
+        maxOptimizedDuration = Math.max(minute1, Math.max(minute2, Math.max(minute3, maxOptimizedDuration)));
+
+        workflowArrivalDataSet = jFreeChartCreator.createArrivalDataSet(workflowArrivals);
+        optimizedVMDataSet = jFreeChartCreator.createVMDataSet("Container", vmActionsRun1, vmActionsRun2, vmActionsRun3);
+
+        double[] coreUsage1 = vmActionsService.getCoreUsage(String.format(optimizedRun, "1"), workflowsRun1.get(0), lastExecutedWorkflowRun1, false);
+        double[] coreUsage2 = vmActionsService.getCoreUsage(String.format(optimizedRun, "2"), workflowsRun2.get(0), lastExecutedWorkflowRun2, false);
+        double[] coreUsage3 = vmActionsService.getCoreUsage(String.format(optimizedRun, "3"), workflowsRun3.get(0), lastExecutedWorkflowRun3, false);
+        calculateStandardDeviation("Intern core usage", coreUsage1[0], coreUsage2[0], coreUsage3[0]);
+        calculateStandardDeviation("Extern core usage", coreUsage1[1], coreUsage2[1], coreUsage3[1]);
+
+        double[] penaltyPoints1 = penalty(workflowsRun1, "1");
+        double[] penaltyPoints2 = penalty(workflowsRun2, "2");
+        double[] penaltyPoints3 = penalty(workflowsRun3, "3");
+        calculateStandardDeviation("Penalty percent", penaltyPoints1[0], penaltyPoints2[0], penaltyPoints3[0]);
+        calculateStandardDeviation("Penalty points", penaltyPoints1[1], penaltyPoints2[1], penaltyPoints3[1]);
+
+        double total1 = coreUsage1[0] + coreUsage1[1] + penaltyPoints1[1];
+        double total2 = coreUsage2[0] + coreUsage2[1] + penaltyPoints2[1];
+        double total3 = coreUsage3[0] + coreUsage3[1] + penaltyPoints3[1];
+
+
+        log.info("Total costs of optimized run 1: " + total1);
+        log.info("Total costs of optimized run 2: " + total2);
+        log.info("Total costs of optimized run 3: " + total3);
+        calculateStandardDeviation("Total costs optimization runs ", total1, total2, total3);
+
+        return maxOptimizedDuration;
+    }
+
+
     private void durationBaseline(String baselineRun, int maxBaselineDuration) throws SQLException, ParseException {
+
+        log.info("----------------- Baseline: " + baselineRun + " -----------------");
+
         List<WorkflowDTO> workflowsRun1 = workflowService.getWorkflowDTOs(String.format(baselineRun, "1"));
         List<WorkflowDTO> workflowsRun2 = workflowService.getWorkflowDTOs(String.format(baselineRun, "2"));
         List<WorkflowDTO> workflowsRun3 = workflowService.getWorkflowDTOs(String.format(baselineRun, "3"));
@@ -158,16 +244,16 @@ public class DataLoader {
         WorkflowDTO lastExecutedWorkflowRun2 = workflowService.getLastExecutedWorkflow(workflowsRun2);
         WorkflowDTO lastExecutedWorkflowRun3 = workflowService.getLastExecutedWorkflow(workflowsRun3);
 
-        int dif1 = (int) getDurationInMinutes(workflowsRun1.get(0), lastExecutedWorkflowRun1);
-        int dif2 = (int) getDurationInMinutes(workflowsRun2.get(0), lastExecutedWorkflowRun2);
-        int dif3 = (int) getDurationInMinutes(workflowsRun3.get(0), lastExecutedWorkflowRun3);
-        maxBaselineDuration = (int) Math.max(Math.max(Math.max(dif1, dif2), dif3), 0);
+        int eval1Duration = (int) getDurationInMinutes(workflowsRun1.get(0), lastExecutedWorkflowRun1);
+        int eval2Duration = (int) getDurationInMinutes(workflowsRun2.get(0), lastExecutedWorkflowRun2);
+        int eval3Duration = (int) getDurationInMinutes(workflowsRun3.get(0), lastExecutedWorkflowRun3);
+        maxBaselineDuration = (int) Math.max(Math.max(Math.max(eval1Duration, eval2Duration), eval3Duration), 0);
 //                maxBaselineDuration = (int) Math.ceil(maxBaselineDuration / 5.0) * 5;
-        calculateStandardDeviation("duration baselineRun", dif1, dif2, dif3);
+        calculateStandardDeviation("Execution duration baseline run", eval1Duration, eval2Duration, eval3Duration);
 
-        List<VMActionsDTO> vmActionsRun1 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, "1"), workflowsRun1.get(0).getArrivedAt(), dif1, true);
-        List<VMActionsDTO> vmActionsRun2 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, "2"), workflowsRun2.get(0).getArrivedAt(), dif2, true);
-        List<VMActionsDTO> vmActionsRun3 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, "3"), workflowsRun3.get(0).getArrivedAt(), dif3, true);
+        List<VMActionsDTO> vmActionsRun1 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, "1"), workflowsRun1.get(0).getArrivedAt(), eval1Duration, true);
+        List<VMActionsDTO> vmActionsRun2 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, "2"), workflowsRun2.get(0).getArrivedAt(), eval2Duration, true);
+        List<VMActionsDTO> vmActionsRun3 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, "3"), workflowsRun3.get(0).getArrivedAt(), eval3Duration, true);
 
         Collections.sort(vmActionsRun1, Comparator.comparing(VMActionsDTO::getDate));
         Collections.sort(vmActionsRun2, Comparator.comparing(VMActionsDTO::getDate));
@@ -183,102 +269,30 @@ public class DataLoader {
         TimeSeriesCollection baselineVMDataSet = jFreeChartCreator.createVMDataSet("Baseline", vmActionsRun1, vmActionsRun2, vmActionsRun3);
 
         List series = baselineVMDataSet.getSeries();
-        for (Object serie : series) {
-            optimizedVMDataSet.addSeries((TimeSeries) serie);
-        }
+        series.forEach(serie -> optimizedVMDataSet.addSeries((TimeSeries) serie));
 
         double[] coreUsage1 = vmActionsService.getCoreUsage(String.format(baselineRun, "1"), workflowsRun1.get(0), lastExecutedWorkflowRun1, true);
         double[] coreUsage2 = vmActionsService.getCoreUsage(String.format(baselineRun, "2"), workflowsRun2.get(0), lastExecutedWorkflowRun2, true);
         double[] coreUsage3 = vmActionsService.getCoreUsage(String.format(baselineRun, "3"), workflowsRun3.get(0), lastExecutedWorkflowRun3, true);
-        calculateStandardDeviation("core usage", coreUsage1[0], coreUsage2[0], coreUsage3[0]);
-        calculateStandardDeviation("core usage", coreUsage1[1], coreUsage2[1], coreUsage3[1]);
+        calculateStandardDeviation("Intern Core usage", coreUsage1[0], coreUsage2[0], coreUsage3[0]);
+        calculateStandardDeviation("Extern Core usage", coreUsage1[1], coreUsage2[1], coreUsage3[1]);
 
-        double transferCosts1 = dataTransferElementService.getDataTransferCosts(String.format(baselineRun, "1"));
-        double transferCosts2 = dataTransferElementService.getDataTransferCosts(String.format(baselineRun, "2"));
-        double transferCosts3 = dataTransferElementService.getDataTransferCosts(String.format(baselineRun, "3"));
-        calculateStandardDeviation("transfer costs", transferCosts1, transferCosts2, transferCosts3);
+        double[] penaltyPoints1 = penalty(workflowsRun1, "1");
+        double[] penaltyPoints2 = penalty(workflowsRun2, "2");
+        double[] penaltyPoints3 = penalty(workflowsRun3, "3");
+        calculateStandardDeviation("Penalty percent", penaltyPoints1[0], penaltyPoints2[0], penaltyPoints3[0]);
+        calculateStandardDeviation("Penalty points", penaltyPoints1[1], penaltyPoints2[1], penaltyPoints3[1]);
 
-        double[] penaltyPoints1 = penalty(workflowsRun1);
-        double[] penaltyPoints2 = penalty(workflowsRun2);
-        double[] penaltyPoints3 = penalty(workflowsRun3);
-        calculateStandardDeviation("penalty percent", penaltyPoints1[0], penaltyPoints2[0], penaltyPoints3[0]);
-        calculateStandardDeviation("penalty points", penaltyPoints1[1], penaltyPoints2[1], penaltyPoints3[1]);
+        double total1 = coreUsage1[0] + coreUsage1[1]  + penaltyPoints1[1];
+        double total2 = coreUsage2[0] + coreUsage2[1]  + penaltyPoints2[1];
+        double total3 = coreUsage3[0] + coreUsage3[1]  + penaltyPoints3[1];
 
-        double total1 = coreUsage1[0] + penaltyPoints1[1];
-        double total2 = coreUsage2[0] + penaltyPoints2[1];
-        double total3 = coreUsage3[0] + penaltyPoints3[1];
-
-        System.out.println("total costs1: " + total1);
-        System.out.println("total costs2: " + total2);
-        System.out.println("total costs3: " + total3);
-        calculateStandardDeviation("total costs", total1, total2, total3);
+        log.info("Total costs of baseline 1: " + total1);
+        log.info("Total costs of baseline 2: " + total2);
+        log.info("Total costs of baseline 3: " + total3);
+        calculateStandardDeviation("Total costs baseline", total1, total2, total3);
     }
 
-
-    private int durationOptimized(String optimizedRun, int maxOptimizedDuration) throws SQLException, ParseException {
-        List<WorkflowDTO> workflowsRun1 = workflowService.getWorkflowDTOs(String.format(optimizedRun, "1"));
-        List<WorkflowDTO> workflowArrivals = workflowService.getWorkflowDTOsArrivals(String.format(optimizedRun, "1"));
-        List<WorkflowDTO> workflowsRun2 = workflowService.getWorkflowDTOs(String.format(optimizedRun, "2"));
-        List<WorkflowDTO> workflowsRun3 = workflowService.getWorkflowDTOs(String.format(optimizedRun, "3"));
-        WorkflowDTO lastExecutedWorkflowRun1 = workflowService.getLastExecutedWorkflow(workflowsRun1);
-        WorkflowDTO lastExecutedWorkflowRun2 = workflowService.getLastExecutedWorkflow(workflowsRun2);
-        WorkflowDTO lastExecutedWorkflowRun3 = workflowService.getLastExecutedWorkflow(workflowsRun3);
-
-        int dif1 = (int) getDurationInMinutes(workflowsRun1.get(0), lastExecutedWorkflowRun1);
-        int dif2 = (int) getDurationInMinutes(workflowsRun2.get(0), lastExecutedWorkflowRun2);
-        int dif3 = (int) getDurationInMinutes(workflowsRun3.get(0), lastExecutedWorkflowRun3);
-        maxOptimizedDuration = (int) Math.max(Math.max(dif1, dif2), dif3);
-//                maxOptimizedDuration = (int) Math.ceil(maxOptimizedDuration / 5.0) * 5;
-
-        calculateStandardDeviation("duration optimized", dif1, dif2, dif3);
-
-
-        List<VMActionsDTO> vmActionsRun1 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, "1"), workflowsRun1.get(0).getArrivedAt(), dif1, false);
-        List<VMActionsDTO> vmActionsRun2 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, "2"), workflowsRun2.get(0).getArrivedAt(), dif2, false);
-        List<VMActionsDTO> vmActionsRun3 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, "3"), workflowsRun3.get(0).getArrivedAt(), dif3, false);
-        Collections.sort(vmActionsRun1, Comparator.comparing(VMActionsDTO::getDate));
-        Collections.sort(vmActionsRun2, Comparator.comparing(VMActionsDTO::getDate));
-        Collections.sort(vmActionsRun3, Comparator.comparing(VMActionsDTO::getDate));
-
-        int minute1 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
-        int minute2 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
-        int minute3 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
-        maxOptimizedDuration = Math.max(minute1, Math.max(minute2, Math.max(minute3, maxOptimizedDuration)));
-//                maxOptimizedDuration = (int) Math.ceil(maxOptimizedDuration / 5.0) * 5;
-
-
-        workflowArrivalDataSet = jFreeChartCreator.createArrivalDataSet(workflowArrivals);
-        optimizedVMDataSet = jFreeChartCreator.createVMDataSet("SIPP", vmActionsRun1, vmActionsRun2, vmActionsRun3);
-
-        double[] coreUsage1 = vmActionsService.getCoreUsage(String.format(optimizedRun, "1"), workflowsRun1.get(0), lastExecutedWorkflowRun1, false);
-        double[] coreUsage2 = vmActionsService.getCoreUsage(String.format(optimizedRun, "2"), workflowsRun2.get(0), lastExecutedWorkflowRun2, false);
-        double[] coreUsage3 = vmActionsService.getCoreUsage(String.format(optimizedRun, "3"), workflowsRun3.get(0), lastExecutedWorkflowRun3, false);
-        calculateStandardDeviation("core usage", coreUsage1[0], coreUsage2[0], coreUsage3[0]);
-        calculateStandardDeviation("core usage", coreUsage1[1], coreUsage2[1], coreUsage3[1]);
-
-//                    double transferCosts1 = getDataTransferCosts(String.format(optimizedRun, "1"));
-//                    double transferCosts2 = getDataTransferCosts(String.format(optimizedRun, "2"));
-//                    double transferCosts3 = getDataTransferCosts(String.format(optimizedRun, "3"));
-//                    calculateStandardDeviation("transfer costs", transferCosts1, transferCosts2, transferCosts3);
-
-        double[] penaltyPoints1 = penalty(workflowsRun1);
-        double[] penaltyPoints2 = penalty(workflowsRun2);
-        double[] penaltyPoints3 = penalty(workflowsRun3);
-        calculateStandardDeviation("penalty percent", penaltyPoints1[0], penaltyPoints2[0], penaltyPoints3[0]);
-        calculateStandardDeviation("penalty points", penaltyPoints1[1], penaltyPoints2[1], penaltyPoints3[1]);
-
-        double total1 = coreUsage1[0] + coreUsage1[1] + penaltyPoints1[1];
-        double total2 = coreUsage2[0] + coreUsage2[1] + penaltyPoints2[1];
-        double total3 = coreUsage3[0] + coreUsage3[1] + penaltyPoints3[1];
-
-
-        System.out.println("total costs1: " + total1);
-        System.out.println("total costs2: " + total2);
-        System.out.println("total costs3: " + total3);
-        calculateStandardDeviation("total costs", total1, total2, total3);
-
-        return maxOptimizedDuration;
-    }
 
 
     private static void calculateStandardDeviation(String field, double... values) {
@@ -291,10 +305,10 @@ public class DataLoader {
         // Compute some statistics
         double mean = stats.getMean();
         double std = stats.getStandardDeviation();
-        System.out.println(field + ": average" + " mean: " + (mean) + " - std: " + std);
+        log.info(field + ": average" + " mean: " + (mean) + " (std: " + std + ")");
     }
 
-    private static long getDurationInMinutes(WorkflowDTO workflowDTO, WorkflowDTO lastExecutedWorkflowRun1) {
+    private long getDurationInMinutes(WorkflowDTO workflowDTO, WorkflowDTO lastExecutedWorkflowRun1) {
         long start = workflowDTO.getArrivedAt().getTime();
         long end = lastExecutedWorkflowRun1.getFinishedAt().getTime();
         return TimeUnit.MILLISECONDS.toMinutes(end - start);
@@ -302,7 +316,7 @@ public class DataLoader {
 
 
 
-    public double[] penalty(List<WorkflowDTO> workflowsRun) throws SQLException {
+    public double[] penalty(List<WorkflowDTO> workflowsRun, String executionCount) throws SQLException {
         double[] results = new double[2];
         double penalityPoints = 0;
         double missedDeadlines = 0;
@@ -321,7 +335,7 @@ public class DataLoader {
             }
         }
         percentage = (100.0 / workflowsRun.size()) * missedDeadlines;
-        System.out.println("MissedDeadlines: " + missedDeadlines + "/" + totalDeadlines + "(" + percentage + "%) -- Penalty points: " + penalityPoints);
+        log.info("Missed deadlines of run " + executionCount + ": " + missedDeadlines + "/" + totalDeadlines + "(" + percentage + "%), Penalty points: " + penalityPoints);
         return new double[]{percentage, penalityPoints};
     }
 

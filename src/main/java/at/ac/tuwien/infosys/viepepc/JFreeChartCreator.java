@@ -35,23 +35,8 @@ import java.util.concurrent.TimeUnit;
  * Created by Philipp Hoenisch on 9/1/14.
  */
 @Component
-public class JFreeChartCreator {//extends ApplicationFrame {
-    /**
-     * Creates a new demo.
-     *
-     * @param title the frame title.
-     */
-    /*
-    public JFreeChartCreator(final String title) throws IOException {
-        super(title);
+public class JFreeChartCreator {
 
-    }
-
-    public JFreeChartCreator() throws IOException {
-        super("test");
-
-    }
-*/
     public void writeAsPDF(JFreeChart chart, OutputStream out, int width, int height) {
         try {
             Rectangle pagesize = new Rectangle(width, height);
@@ -79,7 +64,7 @@ public class JFreeChartCreator {//extends ApplicationFrame {
      * @param maxDate
      * @return a chart.
      */
-    protected JFreeChart createChart(String name, final XYDataset dataset3, final XYDataset dataset1, Date maxDate) {
+    protected JFreeChart createChart(String name, final XYDataset dataset3, final XYDataset dataset1, Date maxDate, int maxCoreAxisValue, int coreAxisSteps) {
 
         final JFreeChart chart = ChartFactory.createTimeSeriesChart(
                 name,      // chart title
@@ -150,9 +135,9 @@ public class JFreeChartCreator {//extends ApplicationFrame {
             final NumberAxis rangeAxis1 = (NumberAxis) plot.getRangeAxis(0);
             rangeAxis1.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
             rangeAxis1.setAutoRangeIncludesZero(true);
-            NumberTickUnit unit1 = new NumberTickUnit(5);
+            NumberTickUnit unit1 = new NumberTickUnit(coreAxisSteps);
             rangeAxis1.setTickUnit(unit1);
-            rangeAxis1.setRange(0, 55);
+            rangeAxis1.setRange(0, maxCoreAxisValue);
 
             final XYStepRenderer renderer = new XYStepRenderer();
             renderer.setSeriesLinesVisible(0, true);
@@ -223,7 +208,7 @@ public class JFreeChartCreator {//extends ApplicationFrame {
 
             RegularTimePeriod period = new Minute(date);
             TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, workflowDTOs.size());
-            series1.add(timeSeriesDataItem);
+            series1.addOrUpdate(timeSeriesDataItem);
             x++;
         }
 
