@@ -76,7 +76,11 @@ public class VMActionsService {
             dto.setDate(timestamp);
             dto.setVMTypeID(vmTypeId);
             dto.setDate(new Date(timestamp.getTime() - firstDate.getTime()));
-            tmpVMActionsList.add(dto);
+
+            if(!tmpVMActionsList.stream().anyMatch(vmActionsDTO -> vmActionsDTO.getVMID().equals(dto.getVMID()) && vmActionsDTO.getVMAction().equals(dto.getVMAction())))
+            {
+                tmpVMActionsList.add(dto);
+            }
         }
 
 
@@ -151,7 +155,7 @@ public class VMActionsService {
                 VMActionsDTO newAction = new VMActionsDTO();
                 VMActionsDTO first = vmActionsDTOs.get(0);
                 newAction.setDate(first.getDate());
-                newAction.setVMID(lastAction.getVMID() + ",");
+                newAction.setVMID(lastAction.getVMID());
                 int sum = 0;
                 for (VMActionsDTO vmActionsDTO : vmActionsDTOs) {
                     String vmid = newAction.getVMID() + vmActionsDTO.getVMID() + "_" + vmActionsDTO.getVMAction() + ",";
@@ -243,7 +247,7 @@ public class VMActionsService {
 
         List<VMActionsDTO> stopResults = new ArrayList<>();
         for (VMActionsDTO result : results) {
-            if (result.getVMAction().equalsIgnoreCase("STOPPED")) {
+            if (result.getVMAction().equalsIgnoreCase("STOPPED") || result.getVMAction().equalsIgnoreCase("FAILED")) {
                 stopResults.add(result);
             }
         }

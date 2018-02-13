@@ -10,13 +10,18 @@ import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYTitleAnnotation;
 import org.jfree.chart.axis.*;
+import org.jfree.chart.block.BlockBorder;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYStepRenderer;
+import org.jfree.chart.title.LegendTitle;
 import org.jfree.data.time.*;
 import org.jfree.data.xy.XYDataset;
+import org.jfree.ui.RectangleAnchor;
+import org.jfree.ui.RectangleEdge;
 import org.jfree.util.ShapeUtilities;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Philipp Hoenisch on 9/1/14.
  */
-@Component
+@Component("jFreeChartCreator")
 public class JFreeChartCreator {
 
     public void writeAsPDF(JFreeChart chart, OutputStream out, int width, int height) {
@@ -66,71 +71,76 @@ public class JFreeChartCreator {
      */
     protected JFreeChart createChart(String name, final XYDataset dataset3, final XYDataset dataset1, Date maxDate, int maxCoreAxisValue, int coreAxisSteps) {
 
-        final JFreeChart chart = ChartFactory.createTimeSeriesChart(
-                name,      // chart title
-                "Time in Minutes",                      // x axis label
-                "# Leased CPU Cores",                      // y axis label
-                dataset1,                  // data
-//                PlotOrientation.VERTICAL,
-                true,                     // include legend
-                true,                     // tooltips
-                false                     // urls
-        );
+        final JFreeChart chart = ChartFactory.createTimeSeriesChart(null,"Time in Minutes","# Leased CPU Cores", dataset1,true,false, false );
 
-
-        // NOW DO SOME OPTIONAL CUSTOMISATION OF THE CHART...
         chart.setBackgroundPaint(Color.white);
-        chart.setBorderVisible(true);
+        chart.setBorderVisible(false);
 
-        // get a reference to the plot for further customisation...
         final XYPlot plot = chart.getXYPlot();
 
 
-        plot.setBackgroundPaint(Color.white);
-//        plot.setRangeGridlinePaint(Color.white);
+        createPlot(dataset3, maxDate, maxCoreAxisValue, coreAxisSteps, plot);
 
+        Font defaultFont = plot.getDomainAxis().getLabelFont();
+        defaultFont = new Font("Arial", Font.PLAIN, 15);
+        chart.getLegend().setItemFont(defaultFont);
+        XYTitleAnnotation ta = new XYTitleAnnotation(1, 1, chart.getLegend(), RectangleAnchor.TOP_RIGHT);
+
+//        ta.setMaxWidth(1);
+        plot.addAnnotation(ta);
+        chart.removeLegend();
+
+        return chart;
+
+    }
+
+    protected XYPlot createPlot(XYDataset dataset3, Date maxDate, int maxCoreAxisValue, int coreAxisSteps, XYPlot plot) {
         plot.setBackgroundPaint(Color.white);
+
         plot.setDomainGridlinePaint(Color.lightGray);
         plot.setRangeGridlinePaint(Color.lightGray);
-        chart.setBorderVisible(false);
 
-        { // Process axis
-            // change the auto tick unit selection to integer units only...
+        Font defaultFont = plot.getDomainAxis().getLabelFont();
+        defaultFont = new Font("Arial", Font.PLAIN, 15);//defaultFont.deriveFont(13f);
+
+
+        {   // Process Axis
             plot.setDataset(1, dataset3);
             plot.mapDatasetToRangeAxis(1, 1);
-            final ValueAxis axis2 = new NumberAxis("# Arrived Processes");
+            final ValueAxis axis2 = new NumberAxis("# Arrived Processe Requests");
+            axis2.setLabelFont(defaultFont);
+            axis2.setTickLabelFont(defaultFont);
             plot.setRangeAxis(1, axis2);
 
             final NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis(1);
             rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
             rangeAxis.setAutoRangeIncludesZero(true);
             rangeAxis.setRange(0, 10);
-            NumberTickUnit unit = new NumberTickUnit(1);
+            NumberTickUnit unit = new NumberTickUnit(2);
             rangeAxis.setTickUnit(unit);
+        }
 
+        {   // Time Axis
             DateAxis axis = (DateAxis) plot.getDomainAxis();
-            DateFormat dateformat = new CustomSimpleDateFormat("mm");
-            axis.setDateFormatOverride(dateformat);//new SimpleDateFormat("m"));
-//            axis.setDateFormatOverride(new SimpleDateFormat("mm"));
-            axis.setTickUnit(new DateTickUnit(DateTickUnitType.MINUTE, 5, DateTickUnitType.HOUR, 1, dateformat));
-//            axis.setAutoRangeMinimumSize(30);
+            axis.setLabelFont(defaultFont);
+            axis.setTickLabelFont(defaultFont);
+            axis.setDateFormatOverride(new CustomSimpleDateFormat("mm"));
             axis.setMaximumDate(maxDate);
+            axis.setTickUnit(new DateTickUnit(DateTickUnitType.MINUTE, 40));
 
             final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-            renderer.setSeriesLinesVisible(0, true);
+            renderer.setSeriesLinesVisible(0, false);
             renderer.setSeriesShapesVisible(0, true);
             plot.setRenderer(1, renderer);
             plot.getRendererForDataset(plot.getDataset(1)).setSeriesPaint(0, Color.red);
             plot.getRendererForDataset(plot.getDataset(1)).setBaseStroke(new BasicStroke(2f));
-            plot.getRendererForDataset(plot.getDataset(1)).setSeriesShape(0, ShapeUtilities.createRegularCross(2f, 1));
-
-
-
+            plot.getRendererForDataset(plot.getDataset(1)).setSeriesShape(0, ShapeUtilities.createRegularCross(2f, 0.2f));
         }
 
-        {// VM axis
-
+        {   // VM axis
             final ValueAxis axis2 = new NumberAxis("# Leased CPU Cores");
+            axis2.setLabelFont(defaultFont);
+            axis2.setTickLabelFont(defaultFont);
             plot.setRangeAxis(0, axis2);
             final NumberAxis rangeAxis1 = (NumberAxis) plot.getRangeAxis(0);
             rangeAxis1.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
@@ -138,6 +148,8 @@ public class JFreeChartCreator {
             NumberTickUnit unit1 = new NumberTickUnit(coreAxisSteps);
             rangeAxis1.setTickUnit(unit1);
             rangeAxis1.setRange(0, maxCoreAxisValue);
+            rangeAxis1.setLabelFont(defaultFont);
+            rangeAxis1.setTickLabelFont(defaultFont);
 
             final XYStepRenderer renderer = new XYStepRenderer();
             renderer.setSeriesLinesVisible(0, true);
@@ -146,18 +158,17 @@ public class JFreeChartCreator {
 
             XYItemRenderer rendererForDataset = plot.getRendererForDataset(plot.getDataset(0));
             rendererForDataset.setSeriesPaint(0, Color.blue);
-            rendererForDataset.setSeriesStroke(0, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{3.0f, 3.0f}, 3.0f));
+            rendererForDataset.setSeriesStroke(0, new BasicStroke(2.0f));
             rendererForDataset.setSeriesPaint(1, Color.DARK_GRAY);
-            rendererForDataset.setSeriesStroke(1, new BasicStroke(2f));
-            rendererForDataset.setSeriesPaint(2, Color.yellow);
-            rendererForDataset.setSeriesPaint(3, Color.orange);
+            rendererForDataset.setSeriesStroke(1, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f}, 1.0f));
         }
 
-        return chart;
+//        plot.getDomainAxis().setLabelFont( plot.getRangeAxis(0).getLabelFont() );
 
+        return plot;
     }
 
-    private class CustomSimpleDateFormat extends SimpleDateFormat {
+    protected class CustomSimpleDateFormat extends SimpleDateFormat {
         public CustomSimpleDateFormat(String m) {
             super(m);
         }
@@ -167,13 +178,11 @@ public class JFreeChartCreator {
             StringBuffer format = super.format(date, toAppendTo, pos);
             GregorianCalendar greg = new GregorianCalendar();
             greg.setTime(date);
-            int i = greg.get(Calendar.HOUR_OF_DAY);
-            if (i > 1) {
-                int ne = greg.get(Calendar.MINUTE) + ((i - 1) * 60);
-                String ne1 = ne + "";
-                format.setCharAt(0, ne1.charAt(0));
-                format.setCharAt(1, ne1.charAt(1));
-            }
+
+            int hour = greg.get(Calendar.HOUR_OF_DAY);
+            int minute = greg.get(Calendar.MINUTE);
+            int currentMinuteOfDay = ((hour - 9) * 60) + minute;
+            format = new StringBuffer(String.valueOf(currentMinuteOfDay));
 
             return format;
         }

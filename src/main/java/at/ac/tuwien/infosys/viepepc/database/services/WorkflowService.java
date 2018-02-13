@@ -26,6 +26,9 @@ public class WorkflowService {
     @Value("${spring.datasource.password}")
     private String databasePassword = "";
 
+    @Value("${deadline.timezone.adaptation.hours}")
+    private int deadlineTimeZoneAdaptation;
+
     public List<WorkflowDTO> getWorkflowDTOs(String dbName) throws SQLException, ParseException {
         Connection conn = DriverManager.getConnection(databaseUrl.concat(dbName).concat(databaseUrlParameter), databaseUsername, databasePassword);
         //STEP 4: Execute a query
@@ -49,6 +52,7 @@ public class WorkflowService {
             String finishedAt1 = rs.getString("e.finished_at");
             java.util.Date finishedAt = simpleDateFormat.parse(finishedAt1);
 
+            deadline.setTime(deadline.getTime() - deadlineTimeZoneAdaptation * 60 * 60 * 1000);
 
             WorkflowDTO dto = new WorkflowDTO();
             dto.setName(name);
