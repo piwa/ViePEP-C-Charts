@@ -38,29 +38,12 @@ public class CommandLineListener implements CommandLineRunner {
         int maxCoreAxisValue = 120;
         int coreAxisSteps = 10;
 
-        constant_lenient(predefinedMax, maxCoreAxisValue, coreAxisSteps);
-        constant_strict(predefinedMax, maxCoreAxisValue, coreAxisSteps);
-        pyramid_lenient(predefinedMax, maxCoreAxisValue, coreAxisSteps);
-        pyramid_strict(predefinedMax, maxCoreAxisValue, coreAxisSteps);
+        dataLoader.createGraphMain(predefinedMax, coreAxisSteps, maxCoreAxisValue, "Pyramid Arrival GA - Strict", "develop_GeneticAlgorithm_%s", "develop_GeneticAlgorithm_%s", "develop_GeneticAlgorithm.pdf", "1", "1", "1");
 
-//        dataHolderList.add(dataLoader.createGraphMain(predefinedMax, coreAxisSteps, maxCoreAxisValue, "Pyramid Arrival StartParExceedContainer - Strict", "Pyramid_StartParExceedContainer_Strict_1409_%s", "Pyramid_StartParExceed_Strict_1409_%s", "Pyramid_StartParExceed_Strict.pdf", "1", "2", "3"));
-//        dataHolderList.add(dataLoader.createGraphMain(predefinedMax, coreAxisSteps, maxCoreAxisValue, "Pyramid Arrival StartParNotExceedContainer - Strict", "Pyramid_StartParNotExceedContainer_Strict_1409_%s", "Pyramid_StartParNotExceed_Strict_1409_%s", "Pyramid_StartParNotExceed_Strict.pdf", "1", "2", "3"));
-//        JFreeChart chart = multiChartCreator.createChart(dataHolderList);
-//        OutputStream out = null;
-//        try {
-//            File file = new File("combined.pdf");
-//            if (!file.exists()) {
-//                boolean newFile = file.createNewFile();
-//            }
-//            out = new FileOutputStream(file);
-//            multiChartCreator.writeAsPDF(chart, out, 270, 500);
-//            log.info("IMG at: " + file.getAbsolutePath());
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        log.info("");
+//        constant_lenient(predefinedMax, maxCoreAxisValue, coreAxisSteps);
+//        constant_strict(predefinedMax, maxCoreAxisValue, coreAxisSteps);
+//        pyramid_lenient(predefinedMax, maxCoreAxisValue, coreAxisSteps);
+//        pyramid_strict(predefinedMax, maxCoreAxisValue, coreAxisSteps);
 
 
         log.info("Goodbye!");
