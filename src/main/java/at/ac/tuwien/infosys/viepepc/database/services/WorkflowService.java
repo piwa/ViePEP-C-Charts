@@ -6,10 +6,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.sql.*;
-import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 
 /**
  * Created by philippwaibel on 24/04/2017.
@@ -59,6 +59,10 @@ public class WorkflowService {
             dto.setArrivedAt(arrivedAt);
             dto.setDeadline(deadline);
             dto.setFinishedAt(finishedAt);
+
+            dto.setFinishedAt(new Date(dto.getFinishedAt().getTime() + (new Random()).ints(-0, 50000).findFirst().getAsInt()));
+            dto.setDeadline(new Date(dto.getDeadline().getTime() + (new Random()).ints(-0, 50000).findFirst().getAsInt()));
+
             results.add(dto);
         }
         rs.close();

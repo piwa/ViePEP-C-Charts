@@ -126,7 +126,7 @@ public class JFreeChartCreator {
             axis.setTickLabelFont(defaultFont);
             axis.setDateFormatOverride(new CustomSimpleDateFormat("mm"));
             axis.setMaximumDate(maxDate);
-            axis.setTickUnit(new DateTickUnit(DateTickUnitType.MINUTE, 40));
+            axis.setTickUnit(new DateTickUnit(DateTickUnitType.MINUTE, 20));
 
             final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
             renderer.setSeriesLinesVisible(0, false);
@@ -181,7 +181,7 @@ public class JFreeChartCreator {
 
             int hour = greg.get(Calendar.HOUR_OF_DAY);
             int minute = greg.get(Calendar.MINUTE);
-            int currentMinuteOfDay = ((hour - 9) * 60) + minute;
+            int currentMinuteOfDay = ((hour - 1) * 60) + minute;
             format = new StringBuffer(String.valueOf(currentMinuteOfDay));
 
             return format;

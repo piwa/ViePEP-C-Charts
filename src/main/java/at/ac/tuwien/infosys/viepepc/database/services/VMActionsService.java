@@ -77,7 +77,9 @@ public class VMActionsService {
             dto.setVMTypeID(vmTypeId);
             dto.setDate(new Date(timestamp.getTime() - firstDate.getTime()));
 
-            if(!tmpVMActionsList.stream().anyMatch(vmActionsDTO -> vmActionsDTO.getVMID().equals(dto.getVMID()) && vmActionsDTO.getVMAction().equals(dto.getVMAction())))
+            dto.setDate(new Date(dto.getDate().getTime() + (new Random()).ints(0, 50000).findFirst().getAsInt()));
+
+            if(tmpVMActionsList.stream().noneMatch(vmActionsDTO -> vmActionsDTO.getVMID().equals(dto.getVMID()) && vmActionsDTO.getVMAction().equals(dto.getVMAction())))
             {
                 tmpVMActionsList.add(dto);
             }
@@ -239,7 +241,7 @@ public class VMActionsService {
             dto.setVMAction(vmAction);
             dto.setDate(timestamp);
             dto.setVMTypeID(vmTypeId);
-            //dto.setDate(new Date(timestamp.getTime() - firstArrivedWorkflow.getArrivedAt().getTime()));
+            dto.setDate(new Date(dto.getDate().getTime() + (new Random()).ints(0, 50000).findFirst().getAsInt()));
             results.add(dto);
         }
 
@@ -275,9 +277,9 @@ public class VMActionsService {
 
 
                     if(vmType.getLocation().equals("internal")) {
-                        internalCosts = internalCosts + (vmType.getCosts() * timeslots);
+                        internalCosts = internalCosts + inMinutes * vmType.getCores(); //;+ (vmType.getCosts() * timeslots);
                     } else {
-                        externalCosts = externalCosts + (vmType.getCosts() * timeslots);
+                        externalCosts = externalCosts + inMinutes * vmType.getCores(); //; (vmType.getCosts() * timeslots);
                     }
 
                 } catch (Exception e) {

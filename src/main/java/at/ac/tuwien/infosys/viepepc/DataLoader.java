@@ -19,10 +19,7 @@ import java.io.*;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -154,7 +151,7 @@ public class DataLoader {
         double[] coreUsage1 = vmActionsService.getCoreUsage(String.format(optimizedRun, suffix1), workflowsRun1.get(0), lastExecutedWorkflowRun1, false);
         double[] coreUsage2 = vmActionsService.getCoreUsage(String.format(optimizedRun, suffix2), workflowsRun2.get(0), lastExecutedWorkflowRun2, false);
         double[] coreUsage3 = vmActionsService.getCoreUsage(String.format(optimizedRun, suffix3), workflowsRun3.get(0), lastExecutedWorkflowRun3, false);
-        calculateStandardDeviation("Intern core usage", coreUsage1[0], coreUsage2[0], coreUsage3[0]);
+//        calculateStandardDeviation("Intern core usage", coreUsage1[0], coreUsage2[0], coreUsage3[0]);
         calculateStandardDeviation("Extern core usage", coreUsage1[1], coreUsage2[1], coreUsage3[1]);
 
         double[] penaltyPoints1 = penalty(workflowsRun1, suffix1);
@@ -218,7 +215,7 @@ public class DataLoader {
         double[] coreUsage1 = vmActionsService.getCoreUsage(String.format(baselineRun, suffix1), workflowsRun1.get(0), lastExecutedWorkflowRun1, true);
         double[] coreUsage2 = vmActionsService.getCoreUsage(String.format(baselineRun, suffix2), workflowsRun2.get(0), lastExecutedWorkflowRun2, true);
         double[] coreUsage3 = vmActionsService.getCoreUsage(String.format(baselineRun, suffix3), workflowsRun3.get(0), lastExecutedWorkflowRun3, true);
-        calculateStandardDeviation("Intern Core usage", coreUsage1[0], coreUsage2[0], coreUsage3[0]);
+//        calculateStandardDeviation("Intern Core usage", coreUsage1[0], coreUsage2[0], coreUsage3[0]);
         calculateStandardDeviation("Extern Core usage", coreUsage1[1], coreUsage2[1], coreUsage3[1]);
 
         double[] penaltyPoints1 = penalty(workflowsRun1, suffix1);
@@ -242,6 +239,7 @@ public class DataLoader {
         DescriptiveStatistics stats = new DescriptiveStatistics();
 
         for (double value : values) {
+//            value = value + (new Random()).ints(-20, 20).findFirst().getAsInt();
             stats.addValue(value);
         }
 
@@ -269,13 +267,14 @@ public class DataLoader {
         double penalityPoints = 0;
         double missedDeadlines = 0;
         double totalDeadlines = 0;
-
+        double overallOverallDuration = 0;
         double percentage;
         for (WorkflowDTO wf : workflowsRun) {
             totalDeadlines++;
 
             Double overallDuration = Double.valueOf(wf.getFinishedAt().getTime() - wf.getArrivedAt().getTime());
             Double timediff = Double.valueOf(wf.getFinishedAt().getTime() - wf.getDeadline().getTime());
+            overallOverallDuration = overallOverallDuration + overallDuration;
             //  System.out.println("FinishedAt: " + wf.getFinishedAt().getTime() + "ArrivedAt: " + wf.getArrivedAt().getTime() + "Difference: " + timediff);
             if (timediff > 0) {
                 penalityPoints += Math.ceil((timediff / overallDuration) * 10);
@@ -283,7 +282,7 @@ public class DataLoader {
             }
         }
         percentage = (100.0 / workflowsRun.size()) * missedDeadlines;
-        log.info("Missed deadlines of run " + executionCount + ": " + missedDeadlines + "/" + totalDeadlines + "(" + percentage + "%), Penalty points: " + penalityPoints);
+//        log.info("Missed deadlines of run " + executionCount + ": " + missedDeadlines + "/" + totalDeadlines + "(" + percentage + "%), Penalty points: " + penalityPoints + ", Overall Duration: " + overallOverallDuration);
         return new double[]{percentage, penalityPoints};
     }
 
