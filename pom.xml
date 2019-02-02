@@ -22,7 +22,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-		<jfreechart.version>1.0.19</jfreechart.version>
+		<jfreechart.version>1.5.0</jfreechart.version>
 		<apache.math.version>3.6.1</apache.math.version>
 		<itextpdf.version>5.5.11</itextpdf.version>
 	</properties>

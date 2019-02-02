@@ -3,6 +3,7 @@ package at.ac.tuwien.infosys.viepepc;
 import at.ac.tuwien.infosys.viepepc.database.entities.VMActionsDTO;
 import at.ac.tuwien.infosys.viepepc.database.entities.WorkflowDTO;
 import com.itextpdf.awt.DefaultFontMapper;
+import com.itextpdf.awt.PdfGraphics2D;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.PdfContentByte;
@@ -13,16 +14,17 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYTitleAnnotation;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.block.BlockBorder;
+import org.jfree.chart.block.ColumnArrangement;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYStepRenderer;
 import org.jfree.chart.title.LegendTitle;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.RectangleInsets;
+import org.jfree.chart.util.ShapeUtils;
 import org.jfree.data.time.*;
 import org.jfree.data.xy.XYDataset;
-import org.jfree.ui.RectangleAnchor;
-import org.jfree.ui.RectangleEdge;
-import org.jfree.util.ShapeUtilities;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -43,18 +45,39 @@ import java.util.concurrent.TimeUnit;
 public class JFreeChartCreator {
 
     public void writeAsPDF(JFreeChart chart, OutputStream out, int width, int height) {
+//        try {
+//
+//            Document document = new Document(new Rectangle(width - 27, height - 11));
+//            PdfWriter writer = PdfWriter.getInstance(document, out);
+//            document.open();
+//
+//            PdfContentByte cb = writer.getDirectContent();
+//            PdfTemplate pdfTemplate = cb.createTemplate(width, height);
+//            Graphics2D g2d1 = new PdfGraphics2D(pdfTemplate, width, height);
+//            Rectangle2D r2d1 = new Rectangle2D.Double(0, 0, width, height);
+//            chart.draw(g2d1, r2d1);
+//            g2d1.dispose();
+//            cb.addTemplate(pdfTemplate, -13, -9);
+//
+//            document.close();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
         try {
-            Rectangle pagesize = new Rectangle(width, height);
-            Document document = new Document(pagesize, 50, 50, 50, 50);
+
+            Document document = new Document(new Rectangle(width, height));
             PdfWriter writer = PdfWriter.getInstance(document, out);
             document.open();
+
             PdfContentByte cb = writer.getDirectContent();
-            PdfTemplate tp = cb.createTemplate(width, height);
-            Graphics2D g2 = tp.createGraphics(width, height, new DefaultFontMapper());
-            Rectangle2D r2D = new Rectangle2D.Double(0, 0, width, height);
-            chart.draw(g2, r2D);
-            g2.dispose();
-            cb.addTemplate(tp, 0, 0);
+            PdfTemplate pdfTemplate = cb.createTemplate(width, height);
+            Graphics2D g2d1 = new PdfGraphics2D(pdfTemplate, width, height);
+            Rectangle2D r2d1 = new Rectangle2D.Double(0, 0, width, height);
+            chart.draw(g2d1, r2d1);
+            g2d1.dispose();
+            cb.addTemplate(pdfTemplate, 0, 0);
+
             document.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -71,24 +94,37 @@ public class JFreeChartCreator {
      */
     protected JFreeChart createChart(String name, final XYDataset dataset3, final XYDataset dataset1, Date maxDate, int maxCoreAxisValue, int coreAxisSteps) {
 
-        final JFreeChart chart = ChartFactory.createTimeSeriesChart(null,"Time in Minutes","# Leased CPU Cores", dataset1,true,false, false );
+        final JFreeChart chart = ChartFactory.createTimeSeriesChart(null, "Time in Minutes", "# Leased CPU Cores", dataset1, true, false, false);
 
         chart.setBackgroundPaint(Color.white);
         chart.setBorderVisible(false);
 
         final XYPlot plot = chart.getXYPlot();
 
-
         createPlot(dataset3, maxDate, maxCoreAxisValue, coreAxisSteps, plot);
 
-        Font defaultFont = plot.getDomainAxis().getLabelFont();
-        defaultFont = new Font("Arial", Font.PLAIN, 15);
-        chart.getLegend().setItemFont(defaultFont);
-        XYTitleAnnotation ta = new XYTitleAnnotation(1, 1, chart.getLegend(), RectangleAnchor.TOP_RIGHT);
+        Font defaultFont = new Font("Arial", Font.PLAIN, 22);
 
-//        ta.setMaxWidth(1);
+
+//        plot.getLegendItems().get(0).setLineStroke();
+
+        LegendTitle legendTitle = chart.getLegend();
+        LegendTitle legendTitleNew = new LegendTitle(plot, new ColumnArrangement(), new ColumnArrangement());
+        legendTitleNew.setPosition(legendTitle.getPosition());
+        legendTitleNew.setBackgroundPaint(legendTitle.getBackgroundPaint());
+        legendTitleNew.setFrame(new BlockBorder(Color.black));
+        legendTitleNew.setItemFont(defaultFont);
+
+
+
+
+
+
+        XYTitleAnnotation ta = new XYTitleAnnotation(1, 1, legendTitleNew, RectangleAnchor.TOP_RIGHT);
+
         plot.addAnnotation(ta);
         chart.removeLegend();
+        chart.setPadding(new RectangleInsets(1,-11,-7,-11));
 
         return chart;
 
@@ -101,7 +137,7 @@ public class JFreeChartCreator {
         plot.setRangeGridlinePaint(Color.lightGray);
 
         Font defaultFont = plot.getDomainAxis().getLabelFont();
-        defaultFont = new Font("Arial", Font.PLAIN, 15);//defaultFont.deriveFont(13f);
+        defaultFont = new Font("Arial", Font.PLAIN, 22);
 
 
         {   // Process Axis
@@ -110,37 +146,67 @@ public class JFreeChartCreator {
             final ValueAxis axis2 = new NumberAxis("# Arrived Processe Requests");
             axis2.setLabelFont(defaultFont);
             axis2.setTickLabelFont(defaultFont);
+
+            axis2.setLowerBound(0.0);
+            axis2.setLowerMargin(0.0);
+            axis2.setUpperBound(0.0);
+            axis2.setUpperMargin(0.0);
+            axis2.setLabelInsets(new RectangleInsets(0,0,0,0));
+
             plot.setRangeAxis(1, axis2);
 
             final NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis(1);
             rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
             rangeAxis.setAutoRangeIncludesZero(true);
-            rangeAxis.setRange(0, 10);
+            rangeAxis.setRange(0, 8);
             NumberTickUnit unit = new NumberTickUnit(2);
             rangeAxis.setTickUnit(unit);
         }
 
         {   // Time Axis
-            DateAxis axis = (DateAxis) plot.getDomainAxis();
-            axis.setLabelFont(defaultFont);
-            axis.setTickLabelFont(defaultFont);
-            axis.setDateFormatOverride(new CustomSimpleDateFormat("mm"));
-            axis.setMaximumDate(maxDate);
-            axis.setTickUnit(new DateTickUnit(DateTickUnitType.MINUTE, 20));
+//            DateAxis axis = (DateAxis) plot.getDomainAxis();
+            final DateAxis axis2 = new DateAxis("Time in Minutes");
+            axis2.setLabelFont(defaultFont);
+            axis2.setTickLabelFont(defaultFont);
+            axis2.setLabelFont(defaultFont);
+            axis2.setTickLabelFont(defaultFont);
+            axis2.setTickLabelPaint(Color.black);
+
+            axis2.setLabelPaint(Color.black);
+            axis2.setDateFormatOverride(new CustomSimpleDateFormat("mm"));
+            axis2.setMaximumDate(maxDate);
+            axis2.setTickUnit(new DateTickUnit(DateTickUnitType.MINUTE, 20));
+
+            axis2.setLabelInsets(new RectangleInsets(0,0,0,0));
+            plot.setDomainAxis(axis2);
 
             final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
             renderer.setSeriesLinesVisible(0, false);
             renderer.setSeriesShapesVisible(0, true);
+            renderer.setSeriesPaint(0, Color.red);
+            renderer.setDefaultStroke(new BasicStroke(1.0f));
+            renderer.setSeriesShape(0, ShapeUtils.createRegularCross(3f, 0.1f));
+
+//            renderer.setLegendLine(ShapeUtils.createRegularCross(10f, 10f));
+            renderer.setLegendShape(0, ShapeUtils.createRegularCross(3f, 0.1f));
+
+            renderer.setDefaultLegendShape(ShapeUtils.createRegularCross(13f, 13f));
+
             plot.setRenderer(1, renderer);
-            plot.getRendererForDataset(plot.getDataset(1)).setSeriesPaint(0, Color.red);
-            plot.getRendererForDataset(plot.getDataset(1)).setBaseStroke(new BasicStroke(2f));
-            plot.getRendererForDataset(plot.getDataset(1)).setSeriesShape(0, ShapeUtilities.createRegularCross(2f, 0.2f));
+
         }
 
         {   // VM axis
             final ValueAxis axis2 = new NumberAxis("# Leased CPU Cores");
             axis2.setLabelFont(defaultFont);
             axis2.setTickLabelFont(defaultFont);
+
+            axis2.setLowerBound(0.0);
+            axis2.setLowerMargin(0.0);
+            axis2.setUpperBound(0.0);
+            axis2.setUpperMargin(0.0);
+            axis2.setLabelInsets(new RectangleInsets(0,0,0,0));
+
             plot.setRangeAxis(0, axis2);
             final NumberAxis rangeAxis1 = (NumberAxis) plot.getRangeAxis(0);
             rangeAxis1.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
@@ -154,16 +220,33 @@ public class JFreeChartCreator {
             final XYStepRenderer renderer = new XYStepRenderer();
             renderer.setSeriesLinesVisible(0, true);
             renderer.setSeriesShapesVisible(0, false);
+
+            renderer.setSeriesItemLabelPaint(0, Color.green);
+
             plot.setRenderer(0, renderer);
 
             XYItemRenderer rendererForDataset = plot.getRendererForDataset(plot.getDataset(0));
             rendererForDataset.setSeriesPaint(0, Color.blue);
-            rendererForDataset.setSeriesStroke(0, new BasicStroke(2.0f));
+            rendererForDataset.setSeriesStroke(0, new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 1.0f, new float[]{1.0f}, 0.0f));
+
+//            renderer.setLegendShape(0, ShapeUtils.createLineRegion());
+
             rendererForDataset.setSeriesPaint(1, Color.DARK_GRAY);
-            rendererForDataset.setSeriesStroke(1, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f}, 1.0f));
+            rendererForDataset.setSeriesStroke(1, new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f}, 2.0f));
+//            renderer.setLegendShape(1, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f}, 2.0f).createStrokedShape(ShapeUtils.createRegularCross(10f, 10f)));
+
+
+//            rendererForDataset.getLegendItems().get(0).setOutlinePaint(Color.red);
+//            rendererForDataset.getLegendItems().get(0).setLinePaint(Color.green);
+//            rendererForDataset.getLegendItems().get(0).setFillPaint(Color.yellow);
+//            rendererForDataset.getLegendItems().get(0).setOutlineStroke(new BasicStroke(4.0f));
+//            rendererForDataset.getLegendItems().get(1).setFillPaint(Color.DARK_GRAY);
+//            rendererForDataset.getLegendItems().get(1).setLineStroke(new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f}, 2.0f));
+
+//            renderer.getLegendItem(1,0).setFillPaint(Color.green);
+
         }
 
-//        plot.getDomainAxis().setLabelFont( plot.getRangeAxis(0).getLabelFont() );
 
         return plot;
     }
@@ -181,7 +264,8 @@ public class JFreeChartCreator {
 
             int hour = greg.get(Calendar.HOUR_OF_DAY);
             int minute = greg.get(Calendar.MINUTE);
-            int currentMinuteOfDay = ((hour - 1) * 60) + minute;
+            int second = greg.get(Calendar.SECOND);
+            int currentMinuteOfDay = ((hour - 1) * 60) + minute + second;
             format = new StringBuffer(String.valueOf(currentMinuteOfDay));
 
             return format;
@@ -215,7 +299,7 @@ public class JFreeChartCreator {
             List<WorkflowDTO> workflowDTOs = arrivalSorted.get(date);
             date = new Date(date.getTime() - min.getTime());
 
-            RegularTimePeriod period = new Minute(date);
+            RegularTimePeriod period = new Second(date);
             TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, workflowDTOs.size());
             series1.addOrUpdate(timeSeriesDataItem);
             x++;
@@ -230,9 +314,9 @@ public class JFreeChartCreator {
 
     public TimeSeriesCollection createVMDataSet(String setName, List<VMActionsDTO> evaluation1, List<VMActionsDTO> evaluation2, List<VMActionsDTO> evaluation3) {
         final TimeSeries averages = new TimeSeries(setName);
-        final TimeSeries series1 = new TimeSeries("# Leased CPU Cores 1");
-        final TimeSeries series2 = new TimeSeries("# Leased CPU Cores 2");
-        final TimeSeries series3 = new TimeSeries("# Leased CPU Cores 3");
+//        final TimeSeries series1 = new TimeSeries("# Leased CPU Cores 1");
+//        final TimeSeries series2 = new TimeSeries("# Leased CPU Cores 2");
+//        final TimeSeries series3 = new TimeSeries("# Leased CPU Cores 3");
 
         VMActionsDTO first = null;
         VMActionsDTO last = null;
@@ -243,73 +327,73 @@ public class JFreeChartCreator {
 
         Calendar dateStart = new GregorianCalendar();
         dateStart.setTime(first.getDate());
-        dateStart.set(Calendar.MINUTE, 0);
+        dateStart.set(Calendar.MILLISECOND, 0);
 
         Calendar dateEnd = new GregorianCalendar();
         dateEnd.setTime(last.getDate());
 
         Map<Integer, List<VMActionsDTO>> values = new TreeMap<>();
-        long maxMinutes = TimeUnit.MILLISECONDS.toMinutes(dateEnd.getTimeInMillis() - dateStart.getTimeInMillis());
+        long maxSeconds = TimeUnit.MILLISECONDS.toSeconds(dateEnd.getTimeInMillis() - dateStart.getTimeInMillis());
 
-//        maxMinutes = (long) (Math.ceil(maxMinutes / 5.0) * 5);
-
-        for (int i = 0; i <= maxMinutes; i++) {
-            values.put(i, new ArrayList<VMActionsDTO>());
+        for (int i = 0; i <= maxSeconds; i++) {
+            values.put(i, new ArrayList<>());
         }
 
-        for (VMActionsDTO vmActionsDTO : evaluation1) {
-            int minutes = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
-            if (values.get(minutes) != null) {
-                values.get(minutes).add(vmActionsDTO);
+        for (VMActionsDTO containerActionsDTO : evaluation1) {
+            int seconds = (int) TimeUnit.MILLISECONDS.toSeconds(containerActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
+            if (values.get(seconds) != null) {
+                values.get(seconds).add(containerActionsDTO);
             }
         }
-        for (VMActionsDTO vmActionsDTO : evaluation2) {
-            int minutes = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
-            if (values.get(minutes) != null) {
-                values.get(minutes).add(vmActionsDTO);
+        for (VMActionsDTO containerActionsDTO : evaluation2) {
+            int seconds = (int) TimeUnit.MILLISECONDS.toSeconds(containerActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
+            if (values.get(seconds) != null) {
+                values.get(seconds).add(containerActionsDTO);
             }
         }
-        for (VMActionsDTO vmActionsDTO : evaluation3) {
-            int minutes = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
-            if (values.get(minutes) != null) {
-                values.get(minutes).add(vmActionsDTO);
+        for (VMActionsDTO containerActionsDTO : evaluation3) {
+            int seconds = (int) TimeUnit.MILLISECONDS.toSeconds(containerActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
+            if (values.get(seconds) != null) {
+                values.get(seconds).add(containerActionsDTO);
             }
         }
 
 
         double lastAverage = 0;
-        for (Integer minute : values.keySet()) {
-            String output = "" + minute + " ";
+        for (Integer second : values.keySet()) {
+//            String output = "" + second + " ";
             double sum = 0;
             Date date = null;
-            for (VMActionsDTO dto : values.get(minute)) {
-                output += " " + dto.getCoreAmount();
-                sum += dto.getCoreAmount();
+            for (VMActionsDTO dto : values.get(second)) {
+//                output += " " + dto.getCoreAmount();
+                sum = sum + dto.getCoreAmount();
                 date = dto.getDate();
             }
 //            System.out.println(output + " avg: " + sum / 3.0);
 
-            RegularTimePeriod period = new Millisecond(date);
-            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, sum / 3.0);
-            averages.add(timeSeriesDataItem);
+            //if(date != null) {
+                RegularTimePeriod period = new Millisecond(date);
+                TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, sum / 3.0);
+                averages.add(timeSeriesDataItem);
+            //}
         }
 
 
-        for (VMActionsDTO vmActionsDTO : evaluation1) {
-            RegularTimePeriod period = new Minute(vmActionsDTO.getDate());
-            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, vmActionsDTO.getCoreAmount());
-            series1.add(timeSeriesDataItem);
-        }
-        for (VMActionsDTO vmActionsDTO : evaluation2) {
-            RegularTimePeriod period = new Minute(vmActionsDTO.getDate());
-            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, vmActionsDTO.getCoreAmount());
-            series2.add(timeSeriesDataItem);
-        }
-        for (VMActionsDTO vmActionsDTO : evaluation3) {
-            RegularTimePeriod period = new Minute(vmActionsDTO.getDate());
-            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, vmActionsDTO.getCoreAmount());
-            series3.add(timeSeriesDataItem);
-        }
+//        for (VMActionsDTO containerActionsDTO : evaluation1) {
+//            RegularTimePeriod period = new Second(containerActionsDTO.getDate());
+//            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, containerActionsDTO.getCoreAmount());
+//            series1.add(timeSeriesDataItem);
+//        }
+//        for (VMActionsDTO containerActionsDTO : evaluation2) {
+//            RegularTimePeriod period = new Second(containerActionsDTO.getDate());
+//            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, containerActionsDTO.getCoreAmount());
+//            series2.add(timeSeriesDataItem);
+//        }
+//        for (VMActionsDTO containerActionsDTO : evaluation3) {
+//            RegularTimePeriod period = new Second(containerActionsDTO.getDate());
+//            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, containerActionsDTO.getCoreAmount());
+//            series3.add(timeSeriesDataItem);
+//        }
 
         final TimeSeriesCollection dataset = new TimeSeriesCollection();
         dataset.addSeries(averages);
@@ -321,22 +405,22 @@ public class JFreeChartCreator {
 
 
     private VMActionsDTO getFirst(List<VMActionsDTO> evaluation1, VMActionsDTO first) {
-        for (VMActionsDTO vmActionsDTO : evaluation1) {
+        for (VMActionsDTO containerActionsDTO : evaluation1) {
             if (first == null) {
-                first = vmActionsDTO;
-            } else if (first.getDate().after(vmActionsDTO.getDate())) {
-                first = vmActionsDTO;
+                first = containerActionsDTO;
+            } else if (first.getDate().after(containerActionsDTO.getDate())) {
+                first = containerActionsDTO;
             }
         }
         return first;
     }
 
     private VMActionsDTO getLast(List<VMActionsDTO> evaluation, VMActionsDTO last) {
-        for (VMActionsDTO vmActionsDTO : evaluation) {
+        for (VMActionsDTO containerActionsDTO : evaluation) {
             if (last == null) {
-                last = vmActionsDTO;
-            } else if (last.getDate().before(vmActionsDTO.getDate())) {
-                last = vmActionsDTO;
+                last = containerActionsDTO;
+            } else if (last.getDate().before(containerActionsDTO.getDate())) {
+                last = containerActionsDTO;
             }
         }
         return last;

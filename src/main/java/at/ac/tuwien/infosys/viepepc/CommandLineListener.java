@@ -33,11 +33,21 @@ public class CommandLineListener implements CommandLineRunner {
 
     public void run(String... args) {
 
-        int predefinedMax = 120;
-        int maxCoreAxisValue = 120;
+        int timeAxisMax = 7200;
+        int maxCoreAxisValue = 40;
         int coreAxisSteps = 10;
 
-        dataLoader.createGraphMain(predefinedMax, coreAxisSteps, maxCoreAxisValue, "Pyramid Arrival GA - Strict", "develop_geco_vm_%s", "develop_geco_vm_%s", "develop_geco_vm.pdf", "1", "1", "1");
+
+        dataLoader.createGraphMain(timeAxisMax, coreAxisSteps, maxCoreAxisValue, "Constant Arrival GA - Lenient", "Constant_GeCo_VM_Lenient_3001_%s", "Constant_GeCo_VM_Baseline_Lenient_3001_%s", "constant_lenient_geco_vm.pdf", "1", "1", "1");
+
+//        dataLoader.createGraphMain(timeAxisMax, coreAxisSteps, maxCoreAxisValue, "Constant Arrival GA - Strict", "Constant_GeCo_VM_3001_%s", "Constant_GeCo_VM_Baseline_3001_%s", "constant_geco_vm_1.pdf", "1", "1", "1");
+//        dataLoader.createGraphMain(timeAxisMax, coreAxisSteps, maxCoreAxisValue, "Constant Arrival GA - Strict", "Constant_GeCo_VM_3001_%s", "Constant_GeCo_VM_Baseline_3001_%s", "constant_geco_vm_2.pdf", "2", "2", "2");
+//        dataLoader.createGraphMain(timeAxisMax, coreAxisSteps, maxCoreAxisValue, "Constant Arrival GA - Strict", "Constant_GeCo_VM_3001_%s", "Constant_GeCo_VM_Baseline_3001_%s", "constant_geco_vm_3.pdf", "3", "3", "3");
+//        dataLoader.createGraphMain(timeAxisMax, coreAxisSteps, maxCoreAxisValue, "Pyramid Arrival GA - Strict", "Pyramid_GeCo_VM_3001_%s", "Pyramid_GeCo_VM_Baseline_3001_%s", "pyramid_geco_vm.pdf", "1", "1", "1");
+
+//        dataLoader.createGraphMain(timeAxisMax, coreAxisSteps, maxCoreAxisValue, "Constant Arrival GA - Strict", "develop_geco_vm_%s", "develop_geco_vm_baseline_%s", "develop_geco_vm.pdf", "2", "2", "2");
+
+
 
 //        constant_strict(predefinedMax, maxCoreAxisValue, coreAxisSteps);
 //        constant_lenient(predefinedMax, maxCoreAxisValue, coreAxisSteps);

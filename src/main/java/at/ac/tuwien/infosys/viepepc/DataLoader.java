@@ -91,7 +91,7 @@ public class DataLoader {
 
         int absolutMax = predefinedMax;
 
-        JFreeChart chart = jFreeChartCreator.createChart(chartName, workflowArrivalDataSet, optimizedVMDataSet, new Date(absolutMax * 60 * 1000), maxCoreAxisValue, coreAxisSteps);
+        JFreeChart chart = jFreeChartCreator.createChart(chartName, workflowArrivalDataSet, optimizedVMDataSet, new Date(absolutMax * 1000), maxCoreAxisValue, coreAxisSteps);
         OutputStream out = null;
         try {
             File file = new File(filename);
@@ -99,7 +99,7 @@ public class DataLoader {
                 boolean newFile = file.createNewFile();
             }
             out = new FileOutputStream(file);
-            jFreeChartCreator.writeAsPDF(chart, out, 500, 270);
+            jFreeChartCreator.writeAsPDF(chart, out, 500, 350);
             log.info("IMG at: " + file.getAbsolutePath());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -107,7 +107,7 @@ public class DataLoader {
         log.info("");
 
 
-        return new ChartDataHolder(chartName, workflowArrivalDataSet, optimizedVMDataSet, new Date(absolutMax * 60 * 1000), maxCoreAxisValue, coreAxisSteps);
+        return new ChartDataHolder(chartName, workflowArrivalDataSet, optimizedVMDataSet, new Date(absolutMax * 1000), maxCoreAxisValue, coreAxisSteps);
 
     }
 
@@ -125,14 +125,15 @@ public class DataLoader {
         WorkflowDTO lastExecutedWorkflowRun2 = workflowService.getLastExecutedWorkflow(workflowsRun2);
         WorkflowDTO lastExecutedWorkflowRun3 = workflowService.getLastExecutedWorkflow(workflowsRun3);
 
-        int eval1Duration = (int) getDurationInMinutes(workflowsRun1.get(0), lastExecutedWorkflowRun1);
-        int eval2Duration = (int) getDurationInMinutes(workflowsRun2.get(0), lastExecutedWorkflowRun2);
-        int eval3Duration = (int) getDurationInMinutes(workflowsRun3.get(0), lastExecutedWorkflowRun3);
+        int eval1Duration = (int) getDurationInSeconds(workflowsRun1.get(0), lastExecutedWorkflowRun1);
+        int eval2Duration = (int) getDurationInSeconds(workflowsRun2.get(0), lastExecutedWorkflowRun2);
+        int eval3Duration = (int) getDurationInSeconds(workflowsRun3.get(0), lastExecutedWorkflowRun3);
         maxOptimizedDuration = Math.max(Math.max(eval1Duration, eval2Duration), eval3Duration);
 
         calculateStandardDeviation("Execution duration with optimization", eval1Duration, eval2Duration, eval3Duration);
 
-
+//        Date first = new Date(workflowsRun1.get(0).getArrivedAt().getTime() - 60000);
+        Date first = workflowsRun1.get(0).getArrivedAt();
         List<VMActionsDTO> vmActionsRun1 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, suffix1), workflowsRun1.get(0).getArrivedAt(), eval1Duration, false);
         List<VMActionsDTO> vmActionsRun2 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, suffix2), workflowsRun2.get(0).getArrivedAt(), eval2Duration, false);
         List<VMActionsDTO> vmActionsRun3 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, suffix3), workflowsRun3.get(0).getArrivedAt(), eval3Duration, false);
@@ -140,13 +141,10 @@ public class DataLoader {
         Collections.sort(vmActionsRun2, Comparator.comparing(VMActionsDTO::getDate));
         Collections.sort(vmActionsRun3, Comparator.comparing(VMActionsDTO::getDate));
 
-        int minute1 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
-        int minute2 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
-        int minute3 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
-        maxOptimizedDuration = Math.max(minute1, Math.max(minute2, Math.max(minute3, maxOptimizedDuration)));
-
-        workflowArrivalDataSet = jFreeChartCreator.createArrivalDataSet(workflowArrivals);
-        optimizedVMDataSet = jFreeChartCreator.createVMDataSet("Container", vmActionsRun1, vmActionsRun2, vmActionsRun3);
+        int second1 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
+        int second2 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
+        int second3 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
+        maxOptimizedDuration = Math.max(second1, Math.max(second2, Math.max(second3, maxOptimizedDuration)));
 
         double[] coreUsage1 = vmActionsService.getCoreUsage(String.format(optimizedRun, suffix1), workflowsRun1.get(0), lastExecutedWorkflowRun1, false);
         double[] coreUsage2 = vmActionsService.getCoreUsage(String.format(optimizedRun, suffix2), workflowsRun2.get(0), lastExecutedWorkflowRun2, false);
@@ -157,7 +155,7 @@ public class DataLoader {
         double[] penaltyPoints1 = penalty(workflowsRun1, suffix1);
         double[] penaltyPoints2 = penalty(workflowsRun2, suffix2);
         double[] penaltyPoints3 = penalty(workflowsRun3, suffix3);
-        calculateStandardDeviation("Penalty percent", penaltyPoints1[0], penaltyPoints2[0], penaltyPoints3[0]);
+        calculateStandardDeviation("SLA adherence percent", penaltyPoints1[0], penaltyPoints2[0], penaltyPoints3[0]);
         calculateStandardDeviation("Penalty points", penaltyPoints1[1], penaltyPoints2[1], penaltyPoints3[1]);
 
         double total1 = coreUsage1[0] + coreUsage1[1] + penaltyPoints1[1];
@@ -169,6 +167,9 @@ public class DataLoader {
         log.info("Total costs of optimized run 2: " + total2);
         log.info("Total costs of optimized run 3: " + total3);
         calculateStandardDeviation("Total costs optimization runs ", total1, total2, total3);
+
+        workflowArrivalDataSet = jFreeChartCreator.createArrivalDataSet(workflowArrivals);
+        optimizedVMDataSet = jFreeChartCreator.createVMDataSet("GeCo VM", vmActionsRun1, vmActionsRun2, vmActionsRun3);
 
         return maxOptimizedDuration;
     }
@@ -185,25 +186,30 @@ public class DataLoader {
         WorkflowDTO lastExecutedWorkflowRun2 = workflowService.getLastExecutedWorkflow(workflowsRun2);
         WorkflowDTO lastExecutedWorkflowRun3 = workflowService.getLastExecutedWorkflow(workflowsRun3);
 
-        int eval1Duration = (int) getDurationInMinutes(workflowsRun1.get(0), lastExecutedWorkflowRun1);
-        int eval2Duration = (int) getDurationInMinutes(workflowsRun2.get(0), lastExecutedWorkflowRun2);
-        int eval3Duration = (int) getDurationInMinutes(workflowsRun3.get(0), lastExecutedWorkflowRun3);
+        int eval1Duration = (int) getDurationInSeconds(workflowsRun1.get(0), lastExecutedWorkflowRun1);
+        int eval2Duration = (int) getDurationInSeconds(workflowsRun2.get(0), lastExecutedWorkflowRun2);
+        int eval3Duration = (int) getDurationInSeconds(workflowsRun3.get(0), lastExecutedWorkflowRun3);
         maxBaselineDuration = (int) Math.max(Math.max(Math.max(eval1Duration, eval2Duration), eval3Duration), 0);
 //                maxBaselineDuration = (int) Math.ceil(maxBaselineDuration / 5.0) * 5;
         calculateStandardDeviation("Execution duration baseline run", eval1Duration, eval2Duration, eval3Duration);
 
-        List<VMActionsDTO> vmActionsRun1 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, suffix1), workflowsRun1.get(0).getArrivedAt(), eval1Duration, true);
-        List<VMActionsDTO> vmActionsRun2 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, suffix2), workflowsRun2.get(0).getArrivedAt(), eval2Duration, true);
-        List<VMActionsDTO> vmActionsRun3 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, suffix3), workflowsRun3.get(0).getArrivedAt(), eval3Duration, true);
+        Date arrived1 = new Date(workflowsRun1.get(0).getArrivedAt().getTime() - 5000);
+        Date arrived2 = new Date(workflowsRun2.get(0).getArrivedAt().getTime() - 5000);
+        Date arrived3 = new Date(workflowsRun3.get(0).getArrivedAt().getTime() - 5000);
+//        Date first = workflowsRun1.get(0).getArrivedAt();
+
+        List<VMActionsDTO> vmActionsRun1 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, suffix1), arrived1, eval1Duration, true);
+        List<VMActionsDTO> vmActionsRun2 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, suffix2), arrived2, eval2Duration, true);
+        List<VMActionsDTO> vmActionsRun3 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, suffix3), arrived3, eval3Duration, true);
 
         Collections.sort(vmActionsRun1, Comparator.comparing(VMActionsDTO::getDate));
         Collections.sort(vmActionsRun2, Comparator.comparing(VMActionsDTO::getDate));
         Collections.sort(vmActionsRun3, Comparator.comparing(VMActionsDTO::getDate));
 
-        int minute1 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
-        int minute2 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
-        int minute3 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
-        maxBaselineDuration = Math.max(minute1, Math.max(minute2, Math.max(minute3, maxBaselineDuration)));
+        int second1 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
+        int second2 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
+        int second3 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
+        maxBaselineDuration = Math.max(second1, Math.max(second2, Math.max(second3, maxBaselineDuration)));
         maxBaselineDuration = (int) Math.ceil(maxBaselineDuration / 5.0) * 5;
 
 //                workflowArrivalDataSet = jFreeChartCreator.createArrivalDataSet(workflowsRun1);
@@ -221,7 +227,7 @@ public class DataLoader {
         double[] penaltyPoints1 = penalty(workflowsRun1, suffix1);
         double[] penaltyPoints2 = penalty(workflowsRun2, suffix2);
         double[] penaltyPoints3 = penalty(workflowsRun3, suffix3);
-        calculateStandardDeviation("Penalty percent", penaltyPoints1[0], penaltyPoints2[0], penaltyPoints3[0]);
+        calculateStandardDeviation("SLA adherence percent", penaltyPoints1[0], penaltyPoints2[0], penaltyPoints3[0]);
         calculateStandardDeviation("Penalty points", penaltyPoints1[1], penaltyPoints2[1], penaltyPoints3[1]);
 
         double total1 = coreUsage1[0] + coreUsage1[1] + penaltyPoints1[1];
@@ -247,7 +253,7 @@ public class DataLoader {
         double mean = stats.getMean();
         double std = stats.getStandardDeviation();
 
-        if(field.equals("Penalty percent")) {
+        if(field.equals("Penalty percent") || field.equals("SLA adherence percent")) {
             log.info(field + ": average" + " mean: " + (100-mean) + " (std: " + std + ")");
         }
         else {
@@ -255,10 +261,10 @@ public class DataLoader {
         }
     }
 
-    private long getDurationInMinutes(WorkflowDTO workflowDTO, WorkflowDTO lastExecutedWorkflowRun1) {
+    private long getDurationInSeconds(WorkflowDTO workflowDTO, WorkflowDTO lastExecutedWorkflowRun1) {
         long start = workflowDTO.getArrivedAt().getTime();
         long end = lastExecutedWorkflowRun1.getFinishedAt().getTime();
-        return TimeUnit.MILLISECONDS.toMinutes(end - start);
+        return TimeUnit.MILLISECONDS.toSeconds(end - start);
     }
 
 

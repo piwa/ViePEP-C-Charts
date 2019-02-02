@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 @Slf4j
+@SuppressWarnings("Duplicates")
 public class VMActionsService {
 
     @Autowired
@@ -38,13 +39,13 @@ public class VMActionsService {
     /**
      * @param dbName
      * @param firstDate
-     * @param maxDurationInMinutes
+     * @param maxDurationInSeconds
      * @param isBaseline           if this is true, than replace the 0_ variable name with 3_, since in baseline only quadcores were allowed
      * @return
      * @throws SQLException
      * @throws ParseException
      */
-    public List<VMActionsDTO> getVMActionsDTOs(String dbName, Date firstDate, int maxDurationInMinutes, boolean isBaseline) throws SQLException, ParseException {
+    public List<VMActionsDTO> getVMActionsDTOs(String dbName, Date firstDate, int maxDurationInSeconds, boolean isBaseline) throws SQLException, ParseException {
 
         Connection conn = DriverManager.getConnection(databaseUrl.concat(dbName).concat(databaseUrlParameter), databaseUsername, databasePassword);
 
@@ -77,7 +78,8 @@ public class VMActionsService {
             dto.setVMTypeID(vmTypeId);
             dto.setDate(new Date(timestamp.getTime() - firstDate.getTime()));
 
-            dto.setDate(new Date(dto.getDate().getTime() + (new Random()).ints(0, 50000).findFirst().getAsInt()));
+            dto.setDate(new Date(dto.getDate().getTime()));
+//            dto.setDate(new Date(dto.getDate().getTime() + (new Random()).ints(0, 50000).findFirst().getAsInt()));
 
             if(tmpVMActionsList.stream().noneMatch(vmActionsDTO -> vmActionsDTO.getVMID().equals(dto.getVMID()) && vmActionsDTO.getVMAction().equals(dto.getVMAction())))
             {
@@ -92,23 +94,23 @@ public class VMActionsService {
         start.setTime(new Date(time - time));
 
         //sort per minute
-        Map<Integer, List<VMActionsDTO>> perMinuteMap = new HashMap<>();
+        Map<Integer, List<VMActionsDTO>> perSecondsMap = new HashMap<>();
 
         for (VMActionsDTO vmActionsDTO : tmpVMActionsList) {
             Calendar current = new GregorianCalendar();
             current.setTime(vmActionsDTO.getDate());
-            current.set(Calendar.SECOND, 0);
+            current.set(Calendar.MILLISECOND, 0);
             vmActionsDTO.setDate(current.getTime());
-            int minutes = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsDTO.getDate().getTime() - 0);
-            List<VMActionsDTO> vmActionsDTOs = perMinuteMap.get(minutes);
+            int seconds = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsDTO.getDate().getTime());
+            List<VMActionsDTO> vmActionsDTOs = perSecondsMap.get(seconds);
             if (vmActionsDTOs == null) {
                 vmActionsDTOs = new ArrayList<>();
             }
-            if (vmActionsDTO.getVMAction().equalsIgnoreCase("START")) {
-                localMax = Math.max(minutes, localMax);
-            }
+//            if (vmActionsDTO.getVMAction().equalsIgnoreCase("START")) {
+//                localMax = Math.max(seconds, localMax);
+//            }
             vmActionsDTOs.add(vmActionsDTO);
-            perMinuteMap.put(minutes, vmActionsDTOs);
+            perSecondsMap.put(seconds, vmActionsDTOs);
         }
 
 
@@ -117,21 +119,21 @@ public class VMActionsService {
         lastAction.setVMAction("");
         lastAction.setCoreAmount(0);
         lastAction.setVMID("");
-//        System.out.println("LastMinute: " + maxDurationInMinutes);
+//        System.out.println("LastMinute: " + maxDurationInSeconds);
 
         //if last action (localMax) was less than 5 minutes before from the maxDurationInMinutes, set the maxDurationInMinutes to lastAction+5
 
-        if ((localMax) > maxDurationInMinutes) {
-            //ignore
-        } else if ((localMax + 5) > maxDurationInMinutes) {
-            maxDurationInMinutes = localMax + (int) (Math.ceil((maxDurationInMinutes - localMax) / 5.0) * 5);
-        } else {
-            maxDurationInMinutes = localMax + (int) (Math.ceil((maxDurationInMinutes - localMax) / 5.0) * 5);
-        }
+//        if ((localMax) > maxDurationInSeconds) {
+//            //ignore
+//        } else if ((localMax + 5) > maxDurationInSeconds) {
+//            maxDurationInSeconds = localMax + (int) (Math.ceil((maxDurationInSeconds - localMax) / 5.0) * 5);
+//        } else {
+//            maxDurationInSeconds = localMax + (int) (Math.ceil((maxDurationInSeconds - localMax) / 5.0) * 5);
+//        }
 
 
-        for (int i = 0; i <= maxDurationInMinutes; i++) {
-            List<VMActionsDTO> vmActionsDTOs = perMinuteMap.get(i);
+        for (int i = 0; i <= maxDurationInSeconds; i++) {
+            List<VMActionsDTO> vmActionsDTOs = perSecondsMap.get(i);
             if (vmActionsDTOs == null) {
                 vmActionsDTOs = new ArrayList<>();
             }
@@ -139,16 +141,16 @@ public class VMActionsService {
                 if (i == 0) {
                     VMActionsDTO clone = copy(lastAction);
                     vmActionsDTOs.add(clone);
-                    perMinuteMap.put(i, vmActionsDTOs);
+                    perSecondsMap.put(i, vmActionsDTOs);
                     continue;
                 }
                 lastAction = copy(lastAction);
                 GregorianCalendar current = new GregorianCalendar();
                 current.setTime(lastAction.getDate());
-                int minutes = current.get(Calendar.MINUTE);
-                current.set(Calendar.MINUTE, minutes + 1);
+                int seconds = current.get(Calendar.SECOND);
+                current.set(Calendar.SECOND, seconds + 1);
                 lastAction.setDate(current.getTime());
-                if (i >= maxDurationInMinutes) {
+                if (i >= maxDurationInSeconds) {
                     lastAction.setCoreAmount(0);
                 }
 
@@ -165,7 +167,7 @@ public class VMActionsService {
                     sum += getCoreCount(vmActionsDTO);
                 }
                 sum = sum + lastAction.getCoreAmount();
-                if (i >= maxDurationInMinutes) {//set last value to 0
+                if (i >= maxDurationInSeconds) {//set last value to 0
                     newAction.setCoreAmount(0);
                 } else {
                     newAction.setCoreAmount(sum);
@@ -175,15 +177,15 @@ public class VMActionsService {
                 lastAction = copy(newAction);
             }
 
-            perMinuteMap.put(i, vmActionsDTOs);
+            perSecondsMap.put(i, vmActionsDTOs);
         }
 
         List<VMActionsDTO> res = new ArrayList<>();
-        for (Integer integer : perMinuteMap.keySet()) {
-            if (integer > maxDurationInMinutes) {
+        for (Integer integer : perSecondsMap.keySet()) {
+            if (integer > maxDurationInSeconds) {
                 continue; // no need to add them
             }
-            res.addAll(perMinuteMap.get(integer));
+            res.addAll(perSecondsMap.get(integer));
         }
         return res;
     }
@@ -241,7 +243,8 @@ public class VMActionsService {
             dto.setVMAction(vmAction);
             dto.setDate(timestamp);
             dto.setVMTypeID(vmTypeId);
-            dto.setDate(new Date(dto.getDate().getTime() + (new Random()).ints(0, 50000).findFirst().getAsInt()));
+            dto.setDate(new Date(dto.getDate().getTime()));
+//            dto.setDate(new Date(dto.getDate().getTime() + (new Random()).ints(0, 50000).findFirst().getAsInt()));
             results.add(dto);
         }
 
@@ -269,17 +272,17 @@ public class VMActionsService {
                 if (milliseconds == 0) {
                     milliseconds = lastArrivedWorkflow.getFinishedAt().getTime() - action.getDate().getTime();
                 }
-                double inMinutes = milliseconds / 1000 / 60;
-                double timeslots = Math.ceil(inMinutes / 5);
+                double inSeconds = milliseconds / (1000 * 60);
+                double timeslots = Math.ceil(inSeconds / 5);
 
                 try {
                     VMType vmType = cacheVirtualMachineService.getVmTypeFromIdentifier(action.getVMTypeID());
 
 
                     if(vmType.getLocation().equals("internal")) {
-                        internalCosts = internalCosts + inMinutes * vmType.getCores(); //;+ (vmType.getCosts() * timeslots);
+                        internalCosts = internalCosts + inSeconds * vmType.getCores(); //;+ (vmType.getCosts() * timeslots);
                     } else {
-                        externalCosts = externalCosts + inMinutes * vmType.getCores(); //; (vmType.getCosts() * timeslots);
+                        externalCosts = externalCosts + inSeconds * vmType.getCores(); //; (vmType.getCosts() * timeslots);
                     }
 
                 } catch (Exception e) {

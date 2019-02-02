@@ -60,8 +60,10 @@ public class WorkflowService {
             dto.setDeadline(deadline);
             dto.setFinishedAt(finishedAt);
 
-            dto.setFinishedAt(new Date(dto.getFinishedAt().getTime() + (new Random()).ints(-0, 50000).findFirst().getAsInt()));
-            dto.setDeadline(new Date(dto.getDeadline().getTime() + (new Random()).ints(-0, 50000).findFirst().getAsInt()));
+            dto.setFinishedAt(new Date(dto.getFinishedAt().getTime()));
+            dto.setDeadline(new Date(dto.getDeadline().getTime()));
+//            dto.setFinishedAt(new Date(dto.getFinishedAt().getTime() + (new Random()).ints(-0, 50000).findFirst().getAsInt()));
+//            dto.setDeadline(new Date(dto.getDeadline().getTime() + (new Random()).ints(-0, 50000).findFirst().getAsInt()));
 
             results.add(dto);
         }

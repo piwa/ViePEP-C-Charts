@@ -12,9 +12,8 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYStepRenderer;
 import org.jfree.chart.title.LegendTitle;
+import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.data.xy.XYDataset;
-import org.jfree.ui.RectangleEdge;
-import org.jfree.util.ShapeUtilities;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -98,8 +97,8 @@ public class MultiChartCreator extends JFreeChartCreator {
             renderer.setSeriesShapesVisible(0, true);
             plot.setRenderer(1, renderer);
             plot.getRendererForDataset(plot.getDataset(1)).setSeriesPaint(0, Color.red);
-            plot.getRendererForDataset(plot.getDataset(1)).setBaseStroke(new BasicStroke(1f));
-            plot.getRendererForDataset(plot.getDataset(1)).setSeriesShape(0, ShapeUtilities.createRegularCross(2f, 0.3f));
+//            plot.getRendererForDataset(plot.getDataset(1)).setBaseStroke(new BasicStroke(1f));
+//            plot.getRendererForDataset(plot.getDataset(1)).setSeriesShape(0, ShapeUtilities.createRegularCross(2f, 0.3f));
         }
 
         {   // VM axis
