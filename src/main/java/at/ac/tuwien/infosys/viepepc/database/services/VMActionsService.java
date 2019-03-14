@@ -91,7 +91,7 @@ public class VMActionsService {
         //step3: fill in missing entries:
         GregorianCalendar start = new GregorianCalendar();
         long time = firstDate.getTime();
-        start.setTime(new Date(time - time));
+        start.setTime(new Date(0L));
 
         //sort per minute
         Map<Integer, List<VMActionsDTO>> perSecondsMap = new HashMap<>();
@@ -99,16 +99,14 @@ public class VMActionsService {
         for (VMActionsDTO vmActionsDTO : tmpVMActionsList) {
             Calendar current = new GregorianCalendar();
             current.setTime(vmActionsDTO.getDate());
-            current.set(Calendar.MILLISECOND, 0);
+            current.set(Calendar.SECOND, 0);
             vmActionsDTO.setDate(current.getTime());
-            int seconds = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsDTO.getDate().getTime());
+            int seconds = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsDTO.getDate().getTime());
             List<VMActionsDTO> vmActionsDTOs = perSecondsMap.get(seconds);
             if (vmActionsDTOs == null) {
                 vmActionsDTOs = new ArrayList<>();
             }
-//            if (vmActionsDTO.getVMAction().equalsIgnoreCase("START")) {
-//                localMax = Math.max(seconds, localMax);
-//            }
+
             vmActionsDTOs.add(vmActionsDTO);
             perSecondsMap.put(seconds, vmActionsDTOs);
         }
@@ -119,17 +117,6 @@ public class VMActionsService {
         lastAction.setVMAction("");
         lastAction.setCoreAmount(0);
         lastAction.setVMID("");
-//        System.out.println("LastMinute: " + maxDurationInSeconds);
-
-        //if last action (localMax) was less than 5 minutes before from the maxDurationInMinutes, set the maxDurationInMinutes to lastAction+5
-
-//        if ((localMax) > maxDurationInSeconds) {
-//            //ignore
-//        } else if ((localMax + 5) > maxDurationInSeconds) {
-//            maxDurationInSeconds = localMax + (int) (Math.ceil((maxDurationInSeconds - localMax) / 5.0) * 5);
-//        } else {
-//            maxDurationInSeconds = localMax + (int) (Math.ceil((maxDurationInSeconds - localMax) / 5.0) * 5);
-//        }
 
 
         for (int i = 0; i <= maxDurationInSeconds; i++) {
@@ -147,8 +134,8 @@ public class VMActionsService {
                 lastAction = copy(lastAction);
                 GregorianCalendar current = new GregorianCalendar();
                 current.setTime(lastAction.getDate());
-                int seconds = current.get(Calendar.SECOND);
-                current.set(Calendar.SECOND, seconds + 1);
+                int seconds = current.get(Calendar.MINUTE);
+                current.set(Calendar.MINUTE, seconds + 1);
                 lastAction.setDate(current.getTime());
                 if (i >= maxDurationInSeconds) {
                     lastAction.setCoreAmount(0);

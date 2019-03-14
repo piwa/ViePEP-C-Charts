@@ -8,8 +8,7 @@ import at.ac.tuwien.infosys.viepepc.database.services.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.JFreeChart;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.time.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +18,7 @@ import java.io.*;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
+import java.time.DateTimeException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -132,8 +132,6 @@ public class DataLoader {
 
         calculateStandardDeviation("Execution duration with optimization", eval1Duration, eval2Duration, eval3Duration);
 
-//        Date first = new Date(workflowsRun1.get(0).getArrivedAt().getTime() - 60000);
-        Date first = workflowsRun1.get(0).getArrivedAt();
         List<VMActionsDTO> vmActionsRun1 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, suffix1), workflowsRun1.get(0).getArrivedAt(), eval1Duration, false);
         List<VMActionsDTO> vmActionsRun2 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, suffix2), workflowsRun2.get(0).getArrivedAt(), eval2Duration, false);
         List<VMActionsDTO> vmActionsRun3 = vmActionsService.getVMActionsDTOs(String.format(optimizedRun, suffix3), workflowsRun3.get(0).getArrivedAt(), eval3Duration, false);
@@ -141,9 +139,9 @@ public class DataLoader {
         Collections.sort(vmActionsRun2, Comparator.comparing(VMActionsDTO::getDate));
         Collections.sort(vmActionsRun3, Comparator.comparing(VMActionsDTO::getDate));
 
-        int second1 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
-        int second2 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
-        int second3 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
+        int second1 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
+        int second2 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
+        int second3 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
         maxOptimizedDuration = Math.max(second1, Math.max(second2, Math.max(second3, maxOptimizedDuration)));
 
         double[] coreUsage1 = vmActionsService.getCoreUsage(String.format(optimizedRun, suffix1), workflowsRun1.get(0), lastExecutedWorkflowRun1, false);
@@ -169,7 +167,7 @@ public class DataLoader {
         calculateStandardDeviation("Total costs optimization runs ", total1, total2, total3);
 
         workflowArrivalDataSet = jFreeChartCreator.createArrivalDataSet(workflowArrivals);
-        optimizedVMDataSet = jFreeChartCreator.createVMDataSet("GeCo VM", vmActionsRun1, vmActionsRun2, vmActionsRun3);
+        optimizedVMDataSet = jFreeChartCreator.createVMDataSet("GeCoVM", vmActionsRun1, vmActionsRun2, vmActionsRun3);
 
         return maxOptimizedDuration;
     }
@@ -193,9 +191,9 @@ public class DataLoader {
 //                maxBaselineDuration = (int) Math.ceil(maxBaselineDuration / 5.0) * 5;
         calculateStandardDeviation("Execution duration baseline run", eval1Duration, eval2Duration, eval3Duration);
 
-        Date arrived1 = new Date(workflowsRun1.get(0).getArrivedAt().getTime() - 5000);
-        Date arrived2 = new Date(workflowsRun2.get(0).getArrivedAt().getTime() - 5000);
-        Date arrived3 = new Date(workflowsRun3.get(0).getArrivedAt().getTime() - 5000);
+        Date arrived1 = new Date(workflowsRun1.get(0).getArrivedAt().getTime() - 000);
+        Date arrived2 = new Date(workflowsRun2.get(0).getArrivedAt().getTime() - 000);
+        Date arrived3 = new Date(workflowsRun3.get(0).getArrivedAt().getTime() - 000);
 //        Date first = workflowsRun1.get(0).getArrivedAt();
 
         List<VMActionsDTO> vmActionsRun1 = vmActionsService.getVMActionsDTOs(String.format(baselineRun, suffix1), arrived1, eval1Duration, true);
@@ -206,9 +204,9 @@ public class DataLoader {
         Collections.sort(vmActionsRun2, Comparator.comparing(VMActionsDTO::getDate));
         Collections.sort(vmActionsRun3, Comparator.comparing(VMActionsDTO::getDate));
 
-        int second1 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
-        int second2 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
-        int second3 = (int) TimeUnit.MILLISECONDS.toSeconds(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
+        int second1 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun1.get(vmActionsRun1.size() - 1).getDate().getTime());
+        int second2 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun2.get(vmActionsRun2.size() - 1).getDate().getTime());
+        int second3 = (int) TimeUnit.MILLISECONDS.toMinutes(vmActionsRun3.get(vmActionsRun3.size() - 1).getDate().getTime());
         maxBaselineDuration = Math.max(second1, Math.max(second2, Math.max(second3, maxBaselineDuration)));
         maxBaselineDuration = (int) Math.ceil(maxBaselineDuration / 5.0) * 5;
 
@@ -264,7 +262,7 @@ public class DataLoader {
     private long getDurationInSeconds(WorkflowDTO workflowDTO, WorkflowDTO lastExecutedWorkflowRun1) {
         long start = workflowDTO.getArrivedAt().getTime();
         long end = lastExecutedWorkflowRun1.getFinishedAt().getTime();
-        return TimeUnit.MILLISECONDS.toSeconds(end - start);
+        return TimeUnit.MILLISECONDS.toMinutes(end - start);
     }
 
 

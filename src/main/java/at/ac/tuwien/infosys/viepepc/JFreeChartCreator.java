@@ -116,15 +116,11 @@ public class JFreeChartCreator {
         legendTitleNew.setItemFont(defaultFont);
 
 
-
-
-
-
         XYTitleAnnotation ta = new XYTitleAnnotation(1, 1, legendTitleNew, RectangleAnchor.TOP_RIGHT);
 
         plot.addAnnotation(ta);
         chart.removeLegend();
-        chart.setPadding(new RectangleInsets(1,-11,-7,-11));
+        chart.setPadding(new RectangleInsets(1, -11, -7, -11));
 
         return chart;
 
@@ -136,22 +132,21 @@ public class JFreeChartCreator {
         plot.setDomainGridlinePaint(Color.lightGray);
         plot.setRangeGridlinePaint(Color.lightGray);
 
-        Font defaultFont = plot.getDomainAxis().getLabelFont();
-        defaultFont = new Font("Arial", Font.PLAIN, 22);
+        Font defaultFont = new Font("Arial", Font.PLAIN, 22);
 
 
         {   // Process Axis
             plot.setDataset(1, dataset3);
             plot.mapDatasetToRangeAxis(1, 1);
-            final ValueAxis axis2 = new NumberAxis("# Arrived Processe Requests");
+            final ValueAxis axis2 = new NumberAxis("# Arrived Process Requests");
             axis2.setLabelFont(defaultFont);
             axis2.setTickLabelFont(defaultFont);
-
-            axis2.setLowerBound(0.0);
-            axis2.setLowerMargin(0.0);
-            axis2.setUpperBound(0.0);
-            axis2.setUpperMargin(0.0);
-            axis2.setLabelInsets(new RectangleInsets(0,0,0,0));
+//
+//            axis2.setLowerBound(0.0);
+//            axis2.setLowerMargin(0.0);
+//            axis2.setUpperBound(0.0);
+//            axis2.setUpperMargin(0.0);
+//            axis2.setLabelInsets(new RectangleInsets(0, 0, 0, 0));
 
             plot.setRangeAxis(1, axis2);
 
@@ -177,7 +172,7 @@ public class JFreeChartCreator {
             axis2.setMaximumDate(maxDate);
             axis2.setTickUnit(new DateTickUnit(DateTickUnitType.MINUTE, 20));
 
-            axis2.setLabelInsets(new RectangleInsets(0,0,0,0));
+            axis2.setLabelInsets(new RectangleInsets(0, 0, 0, 0));
             plot.setDomainAxis(axis2);
 
             final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
@@ -205,7 +200,7 @@ public class JFreeChartCreator {
             axis2.setLowerMargin(0.0);
             axis2.setUpperBound(0.0);
             axis2.setUpperMargin(0.0);
-            axis2.setLabelInsets(new RectangleInsets(0,0,0,0));
+            axis2.setLabelInsets(new RectangleInsets(0, 0, 0, 0));
 
             plot.setRangeAxis(0, axis2);
             final NumberAxis rangeAxis1 = (NumberAxis) plot.getRangeAxis(0);
@@ -217,33 +212,21 @@ public class JFreeChartCreator {
             rangeAxis1.setLabelFont(defaultFont);
             rangeAxis1.setTickLabelFont(defaultFont);
 
-            final XYStepRenderer renderer = new XYStepRenderer();
+            final XYLineAndShapeRenderer renderer = new XYStepRenderer();
+            renderer.setDrawSeriesLineAsPath(true);
             renderer.setSeriesLinesVisible(0, true);
             renderer.setSeriesShapesVisible(0, false);
+            renderer.setSeriesLinesVisible(1, true);
+            renderer.setSeriesShapesVisible(1, false);
 
             renderer.setSeriesItemLabelPaint(0, Color.green);
 
+            renderer.setSeriesPaint(0, Color.blue);
+
+            renderer.setSeriesPaint(1, Color.DARK_GRAY);
+            renderer.setSeriesStroke(1, new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{6.0f, 6.0f}, 0.0f));
+
             plot.setRenderer(0, renderer);
-
-            XYItemRenderer rendererForDataset = plot.getRendererForDataset(plot.getDataset(0));
-            rendererForDataset.setSeriesPaint(0, Color.blue);
-            rendererForDataset.setSeriesStroke(0, new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 1.0f, new float[]{1.0f}, 0.0f));
-
-//            renderer.setLegendShape(0, ShapeUtils.createLineRegion());
-
-            rendererForDataset.setSeriesPaint(1, Color.DARK_GRAY);
-            rendererForDataset.setSeriesStroke(1, new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f}, 2.0f));
-//            renderer.setLegendShape(1, new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f}, 2.0f).createStrokedShape(ShapeUtils.createRegularCross(10f, 10f)));
-
-
-//            rendererForDataset.getLegendItems().get(0).setOutlinePaint(Color.red);
-//            rendererForDataset.getLegendItems().get(0).setLinePaint(Color.green);
-//            rendererForDataset.getLegendItems().get(0).setFillPaint(Color.yellow);
-//            rendererForDataset.getLegendItems().get(0).setOutlineStroke(new BasicStroke(4.0f));
-//            rendererForDataset.getLegendItems().get(1).setFillPaint(Color.DARK_GRAY);
-//            rendererForDataset.getLegendItems().get(1).setLineStroke(new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[]{4.0f}, 2.0f));
-
-//            renderer.getLegendItem(1,0).setFillPaint(Color.green);
 
         }
 
@@ -299,7 +282,7 @@ public class JFreeChartCreator {
             List<WorkflowDTO> workflowDTOs = arrivalSorted.get(date);
             date = new Date(date.getTime() - min.getTime());
 
-            RegularTimePeriod period = new Second(date);
+            RegularTimePeriod period = new Minute(date);
             TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, workflowDTOs.size());
             series1.addOrUpdate(timeSeriesDataItem);
             x++;
@@ -314,9 +297,6 @@ public class JFreeChartCreator {
 
     public TimeSeriesCollection createVMDataSet(String setName, List<VMActionsDTO> evaluation1, List<VMActionsDTO> evaluation2, List<VMActionsDTO> evaluation3) {
         final TimeSeries averages = new TimeSeries(setName);
-//        final TimeSeries series1 = new TimeSeries("# Leased CPU Cores 1");
-//        final TimeSeries series2 = new TimeSeries("# Leased CPU Cores 2");
-//        final TimeSeries series3 = new TimeSeries("# Leased CPU Cores 3");
 
         VMActionsDTO first = null;
         VMActionsDTO last = null;
@@ -327,32 +307,32 @@ public class JFreeChartCreator {
 
         Calendar dateStart = new GregorianCalendar();
         dateStart.setTime(first.getDate());
-        dateStart.set(Calendar.MILLISECOND, 0);
+        dateStart.set(Calendar.SECOND, 0);
 
         Calendar dateEnd = new GregorianCalendar();
         dateEnd.setTime(last.getDate());
 
         Map<Integer, List<VMActionsDTO>> values = new TreeMap<>();
-        long maxSeconds = TimeUnit.MILLISECONDS.toSeconds(dateEnd.getTimeInMillis() - dateStart.getTimeInMillis());
+        long maxSeconds = TimeUnit.MILLISECONDS.toMinutes(dateEnd.getTimeInMillis() - dateStart.getTimeInMillis());
 
         for (int i = 0; i <= maxSeconds; i++) {
             values.put(i, new ArrayList<>());
         }
 
         for (VMActionsDTO containerActionsDTO : evaluation1) {
-            int seconds = (int) TimeUnit.MILLISECONDS.toSeconds(containerActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
+            int seconds = (int) TimeUnit.MILLISECONDS.toMinutes(containerActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
             if (values.get(seconds) != null) {
                 values.get(seconds).add(containerActionsDTO);
             }
         }
         for (VMActionsDTO containerActionsDTO : evaluation2) {
-            int seconds = (int) TimeUnit.MILLISECONDS.toSeconds(containerActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
+            int seconds = (int) TimeUnit.MILLISECONDS.toMinutes(containerActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
             if (values.get(seconds) != null) {
                 values.get(seconds).add(containerActionsDTO);
             }
         }
         for (VMActionsDTO containerActionsDTO : evaluation3) {
-            int seconds = (int) TimeUnit.MILLISECONDS.toSeconds(containerActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
+            int seconds = (int) TimeUnit.MILLISECONDS.toMinutes(containerActionsDTO.getDate().getTime() - dateStart.getTimeInMillis());
             if (values.get(seconds) != null) {
                 values.get(seconds).add(containerActionsDTO);
             }
@@ -361,45 +341,24 @@ public class JFreeChartCreator {
 
         double lastAverage = 0;
         for (Integer second : values.keySet()) {
-//            String output = "" + second + " ";
+
             double sum = 0;
             Date date = null;
             for (VMActionsDTO dto : values.get(second)) {
-//                output += " " + dto.getCoreAmount();
+
                 sum = sum + dto.getCoreAmount();
                 date = dto.getDate();
             }
-//            System.out.println(output + " avg: " + sum / 3.0);
 
-            //if(date != null) {
-                RegularTimePeriod period = new Millisecond(date);
-                TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, sum / 3.0);
-                averages.add(timeSeriesDataItem);
-            //}
+            RegularTimePeriod period = new Millisecond(date);
+            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, sum / 3.0);
+            averages.add(timeSeriesDataItem);
+
         }
 
 
-//        for (VMActionsDTO containerActionsDTO : evaluation1) {
-//            RegularTimePeriod period = new Second(containerActionsDTO.getDate());
-//            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, containerActionsDTO.getCoreAmount());
-//            series1.add(timeSeriesDataItem);
-//        }
-//        for (VMActionsDTO containerActionsDTO : evaluation2) {
-//            RegularTimePeriod period = new Second(containerActionsDTO.getDate());
-//            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, containerActionsDTO.getCoreAmount());
-//            series2.add(timeSeriesDataItem);
-//        }
-//        for (VMActionsDTO containerActionsDTO : evaluation3) {
-//            RegularTimePeriod period = new Second(containerActionsDTO.getDate());
-//            TimeSeriesDataItem timeSeriesDataItem = new TimeSeriesDataItem(period, containerActionsDTO.getCoreAmount());
-//            series3.add(timeSeriesDataItem);
-//        }
-
         final TimeSeriesCollection dataset = new TimeSeriesCollection();
         dataset.addSeries(averages);
-//        dataset.addSeries(series1);
-//        dataset.addSeries(series2);
-//        dataset.addSeries(series3);
         return dataset;
     }
 
